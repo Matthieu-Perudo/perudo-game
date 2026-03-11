@@ -384,24 +384,31 @@ input:focus { border-color:var(--gold); }
 }
 .adjust-btn-row {
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
 }
 .btn-adjust-dice {
-  padding:16px 8px;
+  padding:14px 4px;
   border-radius:10px;
   font-family:'Cinzel',serif;
-  font-size:0.85rem; font-weight:700;
-  letter-spacing:0.08em;
+  font-size:0.75rem; font-weight:700;
+  letter-spacing:0.05em;
   cursor:pointer;
   transition:all 0.2s;
-  border:none;
+  border:2px solid transparent;
   text-transform:uppercase;
+  position:relative;
 }
 .btn-adjust-dice.minus {
   background:linear-gradient(135deg,var(--red) 0%,#4a0e0e 100%);
   color:var(--cream);
   box-shadow:0 4px 16px rgba(123,28,28,0.4);
+}
+.btn-adjust-dice.neutral {
+  background:linear-gradient(135deg,#2e1e0a 0%,#1a1005 100%);
+  color:rgba(242,228,196,0.7);
+  border-color:rgba(200,165,90,0.22);
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);
 }
 .btn-adjust-dice.plus {
   background:linear-gradient(135deg,#1a4a1a 0%,#0b2e0b 100%);
@@ -409,10 +416,39 @@ input:focus { border-color:var(--gold); }
   box-shadow:0 4px 16px rgba(20,100,20,0.4);
 }
 .btn-adjust-dice:active { transform:scale(0.96); }
-.btn-adjust-dice:disabled {
-  opacity:0.3;
+.btn-adjust-dice.voted {
+  opacity:0.45;
   cursor:not-allowed;
   transform:none;
+  border-color:var(--gold);
+}
+.btn-adjust-dice:disabled {
+  opacity:0.25;
+  cursor:not-allowed;
+  transform:none;
+}
+
+/* Votes en attente */
+.vote-status {
+  display:flex; gap:6px; flex-wrap:wrap; justify-content:center;
+}
+.vote-pip {
+  display:inline-flex; align-items:center; gap:4px;
+  font-family:'Cinzel',serif; font-size:0.58rem;
+  letter-spacing:0.05em;
+  padding:3px 7px;
+  border-radius:12px;
+  background:var(--dark3);
+  border:1px solid rgba(200,165,90,0.15);
+  color:rgba(242,228,196,0.35);
+}
+.vote-pip.done {
+  border-color:rgba(200,165,90,0.4);
+  color:var(--gold-light);
+}
+.vote-pip .pip-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:currentColor; opacity:0.6; flex-shrink:0;
 }
 
 .adjust-note {
@@ -547,7 +583,7 @@ input:focus { border-color:var(--gold); }
   <div class="setup-card">
     <div class="input-group">
       <label>Votre prénom</label>
-      <input type="text" id="inp-name" placeholder="Ex: Hugo" maxlength="12" autocomplete="off">
+      <input type="text" id="inp-name" placeholder="Ex: Maqueue t’es trop fort maxlength="12" autocomplete="off">
     </div>
     <div class="input-group">
       <label>Couleur de votre gobelet</label>
@@ -591,14 +627,16 @@ input:focus { border-color:var(--gold); }
     </div>
     <div id="stats-panel"></div>
 
-    <!-- Adjust round (visible après révélation, 1 clic global) -->
+    <!-- Adjust round (visible après révélation) -->
     <div id="round-adjust">
       <div class="adjust-title">⚖️ RÉSULTAT DE LA MANCHE</div>
       <div class="adjust-btn-row">
-        <button class="btn-adjust-dice minus" id="btn-minus" onclick="applyRoundResult(-1)">☠️ −1 dé<br><small style="font-size:0.6rem;opacity:0.6;font-weight:400">Le menteur perd</small></button>
-        <button class="btn-adjust-dice plus"  id="btn-plus"  onclick="applyRoundResult(+1)">🎲 +1 dé<br><small style="font-size:0.6rem;opacity:0.6;font-weight:400">Le devineur gagne</small></button>
+        <button class="btn-adjust-dice minus"   id="btn-minus"   onclick="castVote(-1)">☠️ −1<br><small style="font-size:0.55rem;opacity:0.55;font-weight:400;letter-spacing:0">j'ai perdu</small></button>
+        <button class="btn-adjust-dice neutral" id="btn-neutral" onclick="castVote(0)">— Rien<br><small style="font-size:0.55rem;opacity:0.55;font-weight:400;letter-spacing:0">inchangé</small></button>
+        <button class="btn-adjust-dice plus"    id="btn-plus"    onclick="castVote(+1)">🎲 +1<br><small style="font-size:0.55rem;opacity:0.55;font-weight:400;letter-spacing:0">j'ai gagné</small></button>
       </div>
-      <div class="adjust-note" id="adjust-note">Un seul clic pour tous — relance la manche</div>
+      <div class="adjust-note" id="adjust-note">Chacun vote — la manche reprend quand tous ont voté</div>
+      <div class="vote-status" id="vote-status"></div>
     </div>
 
     <div class="online-badge" id="online-badge">0 joueur(s) connecté(s)</div>
@@ -641,8 +679,9 @@ let state = {
   revealed: false,
   statsVisible: false,
   roomCode: '',
-  roundLocked:   false, // ce joueur a déjà cliqué ±1
-  roundExecuted: false, // l'action a déjà été exécutée cette manche
+  roundLocked:   false,
+  roundExecuted: false,
+  myVote:        undefined,
   _fallbackTimer: null,
 };
 
@@ -708,16 +747,14 @@ function handleRoomState(msg) {
 
   if (allReady && !state.revealed) {
     state.revealed = true;
-    // Lever le gobelet localement
     liftCupRevealed();
     showRevealedUI();
-    send({ type: 'new_round' }); // réinitialise ready côté serveur
+    send({ type: 'new_round' });
   }
 
-  // Le serveur broadcast le round_result → tout le monde l'exécute (une seule fois)
-  if (msg.roundResult !== undefined && !state.roundExecuted) {
-    state.roundExecuted = true;
-    executeRoundResult(msg.roundResult);
+  // Mise à jour des votes si on est en phase de vote
+  if (state.revealed && !state.roundExecuted) {
+    updateVoteStatus();
   }
 }
 
@@ -937,6 +974,7 @@ function showRevealedUI() {
   // Réinitialiser les gardes pour cette manche
   state.roundLocked   = false;
   state.roundExecuted = false;
+  state.myVote        = undefined;
 
   // Réactiver les boutons au cas où ils étaient désactivés
   const bm = document.getElementById('btn-minus');
@@ -982,51 +1020,66 @@ function buildStatCounts(players) {
   return counts;
 }
 
-// ===================== ROUND RESULT (±1 global) =====================
-function applyRoundResult(delta) {
-  if (state.roundLocked || state.roundExecuted) { showToast('Déjà cliqué !'); return; }
-  state.roundLocked = true;
+// ===================== VOTE PAR JOUEUR =====================
+function castVote(delta) {
+  if (state.myVote !== undefined) { showToast('Tu as déjà voté !'); return; }
+  state.myVote = delta;
 
-  // Désactiver immédiatement les boutons localement (feedback visuel)
-  const bm = document.getElementById('btn-minus');
-  const bp = document.getElementById('btn-plus');
-  if (bm) bm.disabled = true;
-  if (bp) bp.disabled = true;
-  const note = document.getElementById('adjust-note');
-  if (note) note.textContent = '⏳ En attente de confirmation…';
-
-  // Envoyer au serveur → il broadcast à tous → handleRoomState → executeRoundResult
-  send({
-    type:  'round_result',
-    delta,
-    name:  state.name,
-    code:  state.roomCode,
+  // Marquer le bouton cliqué
+  ['btn-minus','btn-neutral','btn-plus'].forEach(id => {
+    const b = document.getElementById(id);
+    if (!b) return;
+    b.disabled = true;
+    b.classList.add('voted');
   });
 
-  // Fallback : si le serveur ne supporte pas round_result,
-  // on exécute quand même localement après 500ms sans réponse
-  state._fallbackTimer = setTimeout(() => {
-    if (!state.roundExecuted) {
-      state.roundExecuted = true;
-      executeRoundResult(delta);
-    }
-  }, 800);
+  const label = delta === -1 ? '−1 dé' : delta === 1 ? '+1 dé' : 'Rien';
+  const note = document.getElementById('adjust-note');
+  if (note) note.textContent = `✓ Tu as voté : ${label} — en attente des autres…`;
+
+  // Envoyer le vote au serveur
+  send({
+    type:      'update_player',
+    name:      state.name,
+    color:     state.color,
+    dice:      state.myDice,
+    diceCount: state.myDiceCount,
+    ready:     false,
+    vote:      delta,       // nouveau champ
+    hasVoted:  true,
+  });
 }
 
-function executeRoundResult(delta) {
-  // Annuler le fallback si le serveur a répondu
-  if (state._fallbackTimer) { clearTimeout(state._fallbackTimer); state._fallbackTimer = null; }
+function updateVoteStatus() {
+  const panel = document.getElementById('vote-status');
+  if (!panel) return;
 
-  // Désactiver les boutons visuellement
-  const bm = document.getElementById('btn-minus');
-  const bp = document.getElementById('btn-plus');
-  if (bm) bm.disabled = true;
-  if (bp) bp.disabled = true;
+  const active = Object.values(serverPlayers).filter(p => p.diceCount > 0);
+  panel.innerHTML = active.map(p => {
+    const done = p.hasVoted === true;
+    return `<span class="vote-pip ${done ? 'done' : ''}" style="${done?'border-color:'+p.color+';color:'+p.color:''}">
+      <span class="pip-dot" style="${done?'background:'+p.color:''}"></span>
+      ${p.name}${done ? ' ✓' : ''}
+    </span>`;
+  }).join('');
 
-  const note = document.getElementById('adjust-note');
-  if (note) note.textContent = '⏳ Relance dans 2 secondes…';
+  // Tous ont voté ?
+  if (active.length >= 1 && active.every(p => p.hasVoted)) {
+    const note = document.getElementById('adjust-note');
+    if (note) note.textContent = '⏳ Tout le monde a voté — relance…';
+    setTimeout(() => launchNewRoundFromVotes(), 1200);
+  }
+}
 
-  setTimeout(() => startNewRound(delta), 2000);
+function launchNewRoundFromVotes() {
+  if (state.roundExecuted) return;
+  state.roundExecuted = true;
+
+  // Mon delta vient de serverPlayers (mon propre entrée, mise à jour par le serveur)
+  const me = Object.values(serverPlayers).find(p => p.name === state.name);
+  const myDelta = me && me.hasVoted ? me.vote : 0;
+
+  startNewRound(myDelta);
 }
 
 function startNewRound(delta) {
@@ -1040,6 +1093,7 @@ function startNewRound(delta) {
   state.statsVisible   = false;
   state.roundLocked    = false;
   state.roundExecuted  = false;
+  state.myVote         = undefined;
 
   if (n > 0) {
     state.myDice = rollDice(n);
@@ -1059,6 +1113,16 @@ function startNewRound(delta) {
   document.getElementById('stats-panel').classList.remove('visible');
   document.getElementById('stats-panel').innerHTML = '';
 
+  // Réinitialiser les boutons de vote
+  ['btn-minus','btn-neutral','btn-plus'].forEach(id => {
+    const b = document.getElementById(id);
+    if (!b) return;
+    b.disabled = false;
+    b.classList.remove('voted');
+  });
+  const vs = document.getElementById('vote-status');
+  if (vs) vs.innerHTML = '';
+
   updateDiceCountText();
   renderCup();
 
@@ -1069,11 +1133,14 @@ function startNewRound(delta) {
     diceCount:state.myDiceCount,
     color:state.color,
     ready:false,
+    hasVoted: false,
+    vote: null,
   });
 
   if (n === 0) showToast('☠️ Tu es éliminé !');
   else if (delta > 0) showToast(`+1 dé ! Tu as ${n} dé${n>1?'s':''}`);
-  else showToast(`−1 dé. Il te reste ${n} dé${n>1?'s':''}`);
+  else if (delta < 0) showToast(`−1 dé. Il te reste ${n} dé${n>1?'s':''}`);
+  else showToast(`Manche suivante — ${n} dé${n>1?'s':''} en jeu`);
 }
 
 function closeResults() {
