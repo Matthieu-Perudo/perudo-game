@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Perudo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap');
+
+:root {
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --dark: #0e0a06;
+  --dark2: #1a1208;
+  --dark3: #251a0d;
+  --cream: #f5e6c8;
+  --red: #8b1a1a;
+  --red-light: #c0392b;
+  --player-color: #c9a84c;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background: var(--dark);
+  color: var(--cream);
+  font-family: 'Crimson Pro', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, #2a1a05 0%, transparent 60%),
+    repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(201,168,76,0.015) 40px, rgba(201,168,76,0.015) 41px);
+}
+
+/* =================== SETUP =================== */
+#setup-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 28px;
+}
+
+.title-block { text-align:center; }
+.title-block h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(3rem,12vw,5rem);
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 50%, #8a6020 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+.title-block p {
+  font-style:italic;
+  color:rgba(245,230,200,0.5);
+  font-size:0.95rem;
+  letter-spacing:0.3em;
+  text-transform:uppercase;
+  margin-top:6px;
+}
+
+.gold-line {
+  width:100%; max-width:300px; height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+
+.setup-card {
+  background:var(--dark2);
+  border:1px solid rgba(201,168,76,0.2);
+  border-radius:16px;
+  padding:28px 24px;
+  width:100%; max-width:380px;
+  display:flex; flex-direction:column; gap:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6),inset 0 1px 0 rgba(201,168,76,0.1);
+}
+
+.input-group { display:flex; flex-direction:column; gap:7px; }
+
+label {
+  font-family:'Cinzel',serif;
+  font-size:0.62rem;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--gold);
+  opacity:0.8;
+}
+
+input[type="text"], input[type="number"] {
+  background:var(--dark3);
+  border:1px solid rgba(201,168,76,0.25);
+  border-radius:8px;
+  color:var(--cream);
+  font-family:'Crimson Pro',serif;
+  font-size:1.2rem;
+  padding:11px 14px;
+  outline:none;
+  transition:border-color 0.2s;
+  width:100%;
+}
+input:focus { border-color:var(--gold); }
+
+/* Color picker */
+.color-row {
+  display:flex; gap:10px; flex-wrap:wrap;
+}
+.color-swatch {
+  width:36px; height:36px;
+  border-radius:50%;
+  cursor:pointer;
+  border:3px solid transparent;
+  transition:all 0.2s;
+  position:relative;
+}
+.color-swatch.selected {
+  border-color: white;
+  transform: scale(1.15);
+}
+
+.btn-primary {
+  background:linear-gradient(135deg,var(--gold) 0%,#8a6020 100%);
+  border:none; border-radius:10px;
+  color:var(--dark);
+  font-family:'Cinzel',serif;
+  font-size:0.82rem; font-weight:700;
+  letter-spacing:0.15em;
+  padding:15px 24px;
+  cursor:pointer; text-transform:uppercase;
+  transition:all 0.2s;
+  box-shadow:0 4px 20px rgba(201,168,76,0.3);
+  width:100%; margin-top:6px;
+}
+.btn-primary:active { transform:scale(0.97); opacity:0.9; }
+
+#connection-status {
+  font-size:0.75rem;
+  text-align:center;
+  font-style:italic;
+  min-height:18px;
+}
+.status-ok { color: #5cb85c; }
+.status-err { color: #e74c3c; }
+.status-wait { color: rgba(245,230,200,0.4); }
+
+/* =================== GAME =================== */
+#game-screen {
+  display:none;
+  min-height:100vh;
+  flex-direction:column;
+  align-items:center;
+  padding-bottom:40px;
+}
+
+.player-header {
+  width:100%;
+  background:linear-gradient(180deg,var(--dark2) 0%,transparent 100%);
+  border-bottom:1px solid rgba(201,168,76,0.12);
+  padding:18px 24px 14px;
+  text-align:center;
+  position:relative;
+}
+
+.player-dot {
+  display:inline-block;
+  width:10px; height:10px;
+  border-radius:50%;
+  background:var(--player-color);
+  margin-right:8px;
+  vertical-align:middle;
+  box-shadow:0 0 8px var(--player-color);
+}
+
+.player-name-hdr {
+  font-family:'Cinzel',serif;
+  font-size:1.05rem;
+  letter-spacing:0.15em;
+  color:var(--player-color);
+}
+
+.dice-count-display {
+  font-size:0.82rem;
+  color:rgba(245,230,200,0.45);
+  font-style:italic;
+  margin-top:2px;
+}
+
+/* CUP AREA */
+.cup-area {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:30px 24px 20px;
+  gap:14px;
+  min-height:52vh;
+}
+
+.cup-hint {
+  font-style:italic;
+  color:rgba(245,230,200,0.3);
+  font-size:0.85rem;
+  text-align:center;
+}
+
+.cup-wrapper {
+  position:relative;
+  width:170px; height:210px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.cup-svg {
+  width:100%; height:100%;
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,0.8));
+  transition:transform 0.45s cubic-bezier(0.34,1.56,0.64,1);
+  transform-origin:center bottom;
+}
+
+.cup-wrapper.lifted .cup-svg { transform:translateY(-105px); }
+
+.dice-under {
+  position:absolute;
+  bottom:12px; left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  justify-content:center;
+  width:155px;
+  opacity:0;
+  transition:opacity 0.3s 0.25s;
+  pointer-events:none;
+}
+.cup-wrapper.lifted .dice-under { opacity:1; }
+
+/* =================== 3D DICE SVG =================== */
+.die-3d {
+  width:38px; height:38px;
+  flex-shrink:0;
+  animation:dieAppear 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,0.7));
+}
+@keyframes dieAppear {
+  from { transform:scale(0) rotate(-20deg); opacity:0; }
+  to { transform:scale(1) rotate(0deg); opacity:1; }
+}
+
+/* =================== ACTIONS =================== */
+.actions-panel {
+  width:100%;
+  padding:0 18px;
+  display:flex;
+  flex-direction:column;
+  gap:11px;
+}
+
+.sep {
+  width:100%; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(201,168,76,0.15),transparent);
+  margin:3px 0;
+}
+
+.btn-reveal {
+  background:linear-gradient(135deg,var(--red) 0%,#5a0f0f 100%);
+  border:1px solid rgba(139,26,26,0.5);
+  border-radius:10px;
+  color:var(--cream);
+  font-family:'Cinzel',serif;
+  font-size:0.78rem; font-weight:700;
+  letter-spacing:0.12em;
+  padding:14px 20px;
+  cursor:pointer; text-transform:uppercase;
+  transition:all 0.2s;
+  box-shadow:0 4px 20px rgba(139,26,26,0.35);
+  width:100%;
+}
+.btn-reveal:active { transform:scale(0.97); }
+.btn-reveal.confirmed {
+  background:linear-gradient(135deg,#1a3a1a 0%,#0e1f0e 100%);
+  border-color:rgba(50,150,50,0.4);
+  color:rgba(100,200,100,0.8);
+}
+
+.reveal-status {
+  font-size:0.78rem;
+  color:rgba(245,230,200,0.38);
+  font-style:italic;
+  text-align:center;
+}
+
+.dice-adjust-row {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  opacity:0.25;
+  pointer-events:none;
+  transition:opacity 0.3s;
+}
+.dice-adjust-row.enabled {
+  opacity:1;
+  pointer-events:all;
+}
+
+.dice-adjust {
+  display:flex; align-items:center;
+  background:var(--dark2);
+  border:1px solid rgba(201,168,76,0.2);
+  border-radius:10px;
+  overflow:hidden;
+  flex:1;
+}
+.btn-adj {
+  background:var(--dark3);
+  border:none;
+  color:var(--gold);
+  font-family:'Cinzel',serif;
+  font-size:1.4rem; font-weight:700;
+  padding:13px 26px;
+  cursor:pointer;
+  transition:background 0.15s;
+  flex-shrink:0;
+}
+.btn-adj:active { background:rgba(201,168,76,0.15); }
+.adj-label {
+  flex:1; text-align:center;
+  font-family:'Cinzel',serif;
+  font-size:0.58rem;
+  letter-spacing:0.12em;
+  color:rgba(245,230,200,0.45);
+  line-height:1.4;
+}
+
+.btn-info {
+  background:rgba(201,168,76,0.08);
+  border:1px solid rgba(201,168,76,0.25);
+  border-radius:50%;
+  color:var(--gold);
+  font-family:'Cinzel',serif;
+  font-size:1rem; font-weight:700;
+  width:36px; height:36px;
+  cursor:pointer;
+  display:none;
+  align-items:center; justify-content:center;
+  flex-shrink:0;
+  transition:all 0.2s;
+}
+.btn-info.visible { display:flex; }
+.btn-info:active { background:rgba(201,168,76,0.3); }
+
+/* Stats Panel */
+#stats-panel {
+  display:none;
+  background:var(--dark3);
+  border:1px solid rgba(201,168,76,0.2);
+  border-radius:12px;
+  padding:14px;
+}
+#stats-panel.visible { display:block; }
+.stats-title {
+  font-family:'Cinzel',serif;
+  font-size:0.65rem;
+  letter-spacing:0.15em;
+  color:var(--gold);
+  margin-bottom:10px;
+  text-align:center;
+}
+.stats-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+}
+.stat-item {
+  background:var(--dark2);
+  border-radius:8px;
+  padding:9px 6px;
+  text-align:center;
+}
+.stat-count {
+  font-family:'Cinzel',serif;
+  font-size:1.1rem;
+  color:var(--gold-light);
+  font-weight:700;
+  display:block;
+  margin:3px 0 1px;
+}
+.stat-label {
+  font-size:0.58rem;
+  color:rgba(245,230,200,0.3);
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+}
+
+/* =================== RESULTS OVERLAY =================== */
+#results-overlay {
+  display:none;
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.88);
+  z-index:100;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:20px 16px 40px;
+  overflow-y:auto;
+  backdrop-filter:blur(4px);
+}
+#results-overlay.active { display:flex; }
+
+.results-header {
+  text-align:center;
+  margin-bottom:18px;
+  width:100%;
+}
+.results-header h2 {
+  font-family:'Cinzel',serif;
+  font-size:1.35rem;
+  letter-spacing:0.15em;
+  color:var(--gold);
+  margin-bottom:3px;
+}
+
+.all-players-grid {
+  display:flex; flex-direction:column;
+  gap:9px;
+  width:100%; max-width:400px;
+}
+.player-result-card {
+  background:var(--dark2);
+  border-radius:12px;
+  padding:12px 14px;
+  display:flex; align-items:center; gap:10px;
+  border-left:4px solid var(--card-color, #c9a84c);
+}
+.player-result-card.eliminated { opacity:0.35; }
+
+.pr-name {
+  font-family:'Cinzel',serif;
+  font-size:0.72rem;
+  letter-spacing:0.08em;
+  color:var(--cream);
+  min-width:65px;
+}
+.pr-dice {
+  display:flex; gap:4px; flex-wrap:wrap; flex:1;
+}
+
+#stats-panel-overlay {
+  width:100%; max-width:400px;
+  margin-top:12px;
+}
+
+.close-results-btn {
+  margin-top:18px;
+  background:var(--dark2);
+  border:1px solid rgba(201,168,76,0.2);
+  border-radius:10px;
+  color:var(--cream);
+  font-family:'Cinzel',serif;
+  font-size:0.72rem;
+  letter-spacing:0.15em;
+  padding:12px 32px;
+  cursor:pointer; text-transform:uppercase;
+  width:100%; max-width:400px;
+  transition:all 0.2s;
+}
+.close-results-btn:active { opacity:0.7; }
+
+.eliminated-area {
+  text-align:center;
+  padding:40px 20px;
+}
+.eliminated-area h2 {
+  font-family:'Cinzel',serif;
+  font-size:1.8rem;
+  color:var(--red-light);
+}
+
+/* Toast */
+#toast {
+  position:fixed;
+  bottom:28px; left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--dark2);
+  border:1px solid var(--gold);
+  border-radius:8px;
+  color:var(--cream);
+  font-family:'Cinzel',serif;
+  font-size:0.72rem;
+  letter-spacing:0.1em;
+  padding:10px 18px;
+  text-align:center;
+  transition:transform 0.3s;
+  z-index:999;
+  max-width:280px;
+}
+#toast.show { transform:translateX(-50%) translateY(0); }
+
+/* Players online badge */
+.online-badge {
+  background:rgba(201,168,76,0.07);
+  border:1px solid rgba(201,168,76,0.15);
+  border-radius:20px;
+  color:rgba(245,230,200,0.4);
+  font-size:0.72rem;
+  font-style:italic;
+  padding:5px 14px;
+  text-align:center;
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup-screen">
+  <div class="title-block">
+    <h1>PERUDO</h1>
+    <p>Le jeu des menteurs</p>
+  </div>
+  <div class="gold-line"></div>
+
+  <div class="setup-card">
+    <div class="input-group">
+      <label>Votre prénom</label>
+      <input type="text" id="inp-name" placeholder="Ex: Hugo" maxlength="12" autocomplete="off">
+    </div>
+
+    <div class="input-group">
+      <label>Couleur de votre gobelet</label>
+      <div class="color-row" id="color-row"></div>
+    </div>
+
+    <div class="input-group">
+      <label>Code de partie (même pour tous)</label>
+      <input type="text" id="inp-code" value="perudo" maxlength="16" autocomplete="off">
+    </div>
+
+    <div id="connection-status" class="status-wait">Connexion au serveur...</div>
+    <button class="btn-primary" id="btn-join" onclick="joinGame()" disabled>Rejoindre</button>
+  </div>
+
+  <p style="font-size:0.72rem;color:rgba(245,230,200,0.25);text-align:center;font-style:italic;">Chaque joueur ouvre ce lien sur son téléphone</p>
+</div>
+
+<!-- GAME -->
+<div id="game-screen">
+  <div class="player-header">
+    <div>
+      <span class="player-dot" id="player-dot"></span>
+      <span class="player-name-hdr" id="display-name">—</span>
+    </div>
+    <div class="dice-count-display" id="dice-count-text">5 dés</div>
+  </div>
+
+  <div class="cup-area" id="cup-area"></div>
+
+  <div class="actions-panel">
+    <div class="sep"></div>
+
+    <button class="btn-reveal" id="btn-reveal" onclick="toggleReady()">🫳 MENTEUR — Révéler</button>
+    <div class="reveal-status" id="reveal-status">Appuyez si vous criez "Menteur !"</div>
+
+    <div class="sep"></div>
+
+    <div class="dice-adjust-row" id="dice-adjust-row">
+      <div class="dice-adjust">
+        <button class="btn-adj" onclick="adjustDice(-1)">−</button>
+        <div class="adj-label">Perdant −1 dé<br>Exact +1 dé</div>
+        <button class="btn-adj" onclick="adjustDice(+1)">+</button>
+      </div>
+      <button class="btn-info" id="btn-info" onclick="toggleStats()">i</button>
+    </div>
+
+    <div id="stats-panel"></div>
+    <div class="online-badge" id="online-badge">0 joueur(s) connecté(s)</div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results-overlay">
+  <div class="results-header">
+    <h2>⚔️ RÉVÉLATION</h2>
+    <p style="font-style:italic;color:rgba(245,230,200,0.35);font-size:0.82rem">Tous les dés sont dévoilés</p>
+  </div>
+  <div class="all-players-grid" id="all-players-grid"></div>
+  <div id="stats-panel-overlay"></div>
+  <button class="close-results-btn" onclick="closeResults()">← Fermer</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ===================== CONFIG =====================
+const PLAYER_COLORS = [
+  { name:'Rouge',    hex:'#d63031' },
+  { name:'Bleu',     hex:'#0984e3' },
+  { name:'Vert',     hex:'#00b894' },
+  { name:'Jaune',    hex:'#fdcb6e' },
+  { name:'Violet',   hex:'#a29bfe' },
+  { name:'Orange',   hex:'#e17055' },
+  { name:'Rose',     hex:'#fd79a8' },
+  { name:'Blanc',    hex:'#dfe6e9' },
+];
+
+const MAX_DICE = 5;
+const PACO_FACE = 1; // face 1 = Paco
+
+let state = {
+  name: '', color: PLAYER_COLORS[0].hex,
+  myDice: [], myDiceCount: MAX_DICE,
+  cupLifted: false,
+  readyToReveal: false,
+  revealed: false,
+  statsVisible: false,
+  roomCode: '',
+};
+
+let ws = null;
+let serverPlayers = {};
+
+// ===================== COLORS SETUP =====================
+(function buildColorPicker() {
+  const row = document.getElementById('color-row');
+  PLAYER_COLORS.forEach((c, i) => {
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch' + (i === 0 ? ' selected' : '');
+    sw.style.background = c.hex;
+    sw.title = c.name;
+    sw.onclick = () => {
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+      state.color = c.hex;
+    };
+    row.appendChild(sw);
+  });
+})();
+
+// ===================== WEBSOCKET =====================
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const host = location.host;
+  ws = new WebSocket(`${proto}://${host}`);
+
+  ws.onopen = () => {
+    document.getElementById('connection-status').textContent = '✓ Connecté au serveur';
+    document.getElementById('connection-status').className = 'status-ok';
+    document.getElementById('btn-join').disabled = false;
+  };
+
+  ws.onclose = () => {
+    document.getElementById('connection-status').textContent = '✗ Déconnecté — rechargez la page';
+    document.getElementById('connection-status').className = 'status-err';
+    document.getElementById('btn-join').disabled = true;
+    setTimeout(connectWS, 3000);
+  };
+
+  ws.onerror = () => {
+    document.getElementById('connection-status').textContent = '✗ Erreur de connexion';
+    document.getElementById('connection-status').className = 'status-err';
+  };
+
+  ws.onmessage = (event) => {
+    let msg;
+    try { msg = JSON.parse(event.data); } catch { return; }
+    if (msg.type === 'room_state') handleRoomState(msg);
+  };
+}
+
+function send(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+function handleRoomState(msg) {
+  serverPlayers = msg.players || {};
+  updateOnlineBadge();
+  updateRevealUI();
+
+  // Check if all active players are ready → reveal
+  const active = Object.values(serverPlayers).filter(p => !p.eliminated && p.diceCount > 0);
+  const allReady = active.length >= 2 && active.every(p => p.ready);
+
+  if (allReady && !state.revealed) {
+    state.revealed = true;
+    showResultsOverlay();
+    enableDiceAdjust(true);
+    document.getElementById('btn-info').classList.add('visible');
+
+    // reset everyone's ready
+    send({ type: 'new_round' });
+  }
+}
+
+// ===================== JOIN =====================
+function joinGame() {
+  const name = document.getElementById('inp-name').value.trim();
+  const code = document.getElementById('inp-code').value.trim() || 'perudo';
+  if (!name) { showToast('Entrez votre prénom !'); return; }
+
+  state.name = name;
+  state.roomCode = code;
+  state.myDiceCount = MAX_DICE;
+  state.myDice = rollDice(MAX_DICE);
+
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'flex';
+
+  // Apply color
+  document.documentElement.style.setProperty('--player-color', state.color);
+  document.getElementById('player-dot').style.background = state.color;
+  document.getElementById('player-dot').style.boxShadow = `0 0 8px ${state.color}`;
+  document.getElementById('display-name').textContent = name.toUpperCase();
+  updateDiceCountText();
+
+  send({
+    type: 'join',
+    code,
+    name,
+    color: state.color,
+    dice: state.myDice,
+    diceCount: state.myDiceCount,
+  });
+
+  renderCup();
+}
+
+// ===================== DICE =====================
+function rollDice(n) {
+  return Array.from({length: n}, () => Math.floor(Math.random() * 6) + 1);
+}
+
+// ===================== CUP =====================
+function renderCup() {
+  const area = document.getElementById('cup-area');
+  if (state.myDiceCount <= 0) {
+    area.innerHTML = `<div class="eliminated-area"><h2>☠️ Éliminé</h2><p style="color:rgba(245,230,200,0.35);font-style:italic;margin-top:6px">Tu n'as plus de dés</p></div>`;
+    return;
+  }
+  const lifted = state.cupLifted;
+  const c = state.color;
+  const cDark = shadeColor(c, -40);
+  const cLight = shadeColor(c, 30);
+
+  area.innerHTML = `
+    <p class="cup-hint">${lifted ? 'Touchez pour recacher' : 'Touchez le gobelet pour voir vos dés'}</p>
+    <div class="cup-wrapper${lifted ? ' lifted' : ''}" id="cup-wrapper" onclick="toggleCup()">
+      ${buildCupSVG(c, cDark, cLight)}
+      <div class="dice-under" id="dice-display"></div>
+    </div>
+  `;
+  if (lifted) renderDiceUnder();
+}
+
+function buildCupSVG(c, cDark, cLight) {
+  return `<svg class="cup-svg" viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:${cDark}"/>
+        <stop offset="25%" style="stop-color:${c}"/>
+        <stop offset="55%" style="stop-color:${cLight}"/>
+        <stop offset="80%" style="stop-color:${c}"/>
+        <stop offset="100%" style="stop-color:${cDark}"/>
+      </linearGradient>
+      <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:${cDark}"/>
+        <stop offset="50%" style="stop-color:${cLight}"/>
+        <stop offset="100%" style="stop-color:${cDark}"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="80" cy="195" rx="52" ry="5" fill="rgba(0,0,0,0.35)"/>
+    <path d="M 30 40 L 20 185 Q 20 192 30 192 L 130 192 Q 140 192 140 185 L 130 40 Z" fill="url(#cg)"/>
+    <path d="M 35 80 L 125 80" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
+    <path d="M 33 120 L 127 120" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
+    <path d="M 31 160 L 129 160" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
+    <path d="M 52 45 L 47 180" stroke="rgba(255,255,255,0.1)" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <ellipse cx="80" cy="40" rx="52" ry="12" fill="url(#rg)"/>
+    <ellipse cx="80" cy="40" rx="50" ry="10" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+    <ellipse cx="80" cy="42" rx="43" ry="8" fill="#0e0a06" opacity="0.9"/>
+  </svg>`;
+}
+
+function renderDiceUnder() {
+  const container = document.getElementById('dice-display');
+  if (!container) return;
+  container.innerHTML = '';
+  state.myDice.slice(0, state.myDiceCount).forEach((val, i) => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    el.setAttribute('viewBox', '0 0 38 38');
+    el.setAttribute('width', '38');
+    el.setAttribute('height', '38');
+    el.className.baseVal = 'die-3d';
+    el.style.animationDelay = (i * 0.07) + 's';
+    el.innerHTML = buildDiceSVG(val, state.color);
+    container.appendChild(el);
+  });
+}
+
+// Build a realistic 3D die face in SVG
+function buildDiceSVG(value, baseColor) {
+  const c = baseColor;
+  const cDark = shadeColor(c, -50);
+  const cLight = shadeColor(c, 40);
+
+  // Dot positions for each face value
+  const dotLayouts = {
+    1: [[19,19]],
+    2: [[10,10],[28,28]],
+    3: [[10,10],[19,19],[28,28]],
+    4: [[10,10],[28,10],[10,28],[28,28]],
+    5: [[10,10],[28,10],[19,19],[10,28],[28,28]],
+    6: [[10,9],[28,9],[10,19],[28,19],[10,29],[28,29]],
+  };
+
+  let content = '';
+
+  if (value === PACO_FACE) {
+    // Paco: draw a bird/parrot silhouette
+    content = `
+      <ellipse cx="19" cy="19" rx="8" ry="9" fill="white" opacity="0.9"/>
+      <ellipse cx="17" cy="14" rx="3.5" ry="4" fill="white" opacity="0.95"/>
+      <circle cx="16" cy="13" r="1" fill="${cDark}" opacity="0.8"/>
+      <path d="M14 16 Q11 15 10 17" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M19 24 Q19 28 17 30" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M19 24 Q21 28 23 29" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    `;
+  } else {
+    const dots = dotLayouts[value] || [];
+    content = dots.map(([x, y]) =>
+      `<circle cx="${x}" cy="${y}" r="2.8" fill="white" opacity="0.92"/>`
+    ).join('');
+  }
+
+  return `
+    <defs>
+      <linearGradient id="dg${value}${c.replace('#','')}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:${cLight}"/>
+        <stop offset="60%" style="stop-color:${c}"/>
+        <stop offset="100%" style="stop-color:${cDark}"/>
+      </linearGradient>
+    </defs>
+    <!-- Shadow -->
+    <ellipse cx="19" cy="35" rx="14" ry="3" fill="rgba(0,0,0,0.4)"/>
+    <!-- Right face (darker) -->
+    <path d="M 32 6 L 36 10 L 36 31 L 32 32 Z" fill="${cDark}" opacity="0.85"/>
+    <!-- Bottom face -->
+    <path d="M 6 30 L 32 30 L 36 31 L 10 34 Z" fill="${shadeColor(c,-30)}" opacity="0.9"/>
+    <!-- Main face -->
+    <rect x="4" y="4" width="28" height="28" rx="5" fill="url(#dg${value}${c.replace('#','')})"/>
+    <!-- Shine -->
+    <ellipse cx="11" cy="9" rx="5" ry="3" fill="white" opacity="0.18" transform="rotate(-20 11 9)"/>
+    ${content}
+  `;
+}
+
+function toggleCup() {
+  state.cupLifted = !state.cupLifted;
+  const wrapper = document.getElementById('cup-wrapper');
+  if (!wrapper) { renderCup(); return; }
+  wrapper.classList.toggle('lifted', state.cupLifted);
+  const hint = document.querySelector('.cup-hint');
+  if (hint) hint.textContent = state.cupLifted ? 'Touchez pour recacher' : 'Touchez le gobelet pour voir vos dés';
+  if (state.cupLifted) renderDiceUnder();
+  else {
+    const dd = document.getElementById('dice-display');
+    if (dd) dd.innerHTML = '';
+  }
+}
+
+// ===================== REVEAL =====================
+function toggleReady() {
+  if (state.myDiceCount <= 0) { showToast('Tu es éliminé !'); return; }
+  state.readyToReveal = !state.readyToReveal;
+
+  send({
+    type: 'update_player',
+    name: state.name,
+    ready: state.readyToReveal,
+    dice: state.myDice,
+    diceCount: state.myDiceCount,
+    color: state.color,
+  });
+
+  updateRevealUI();
+}
+
+function updateRevealUI() {
+  const btn = document.getElementById('btn-reveal');
+  const status = document.getElementById('reveal-status');
+  if (!btn) return;
+
+  if (state.revealed) return;
+
+  if (state.readyToReveal) {
+    btn.textContent = '✓ Prêt — En attente des autres...';
+    btn.classList.add('confirmed');
+  } else {
+    btn.textContent = '🫳 MENTEUR — Révéler';
+    btn.classList.remove('confirmed');
+  }
+
+  const active = Object.values(serverPlayers).filter(p => !p.eliminated && p.diceCount > 0);
+  const readyCount = active.filter(p => p.ready).length;
+  if (status) {
+    status.textContent = active.length > 0
+      ? `${readyCount}/${active.length} joueur(s) prêts`
+      : 'En attente de joueurs...';
+  }
+}
+
+function showResultsOverlay() {
+  const overlay = document.getElementById('results-overlay');
+  const grid = document.getElementById('all-players-grid');
+  overlay.classList.add('active');
+  grid.innerHTML = '';
+
+  Object.values(serverPlayers).forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'player-result-card' + (p.eliminated || p.diceCount <= 0 ? ' eliminated' : '');
+    card.style.setProperty('--card-color', p.color || '#c9a84c');
+
+    const diceHtml = (p.dice || []).slice(0, p.diceCount).map(v => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 38 38');
+      svg.setAttribute('width', '32');
+      svg.setAttribute('height', '32');
+      svg.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))';
+      svg.innerHTML = buildDiceSVG(v, p.color || '#c9a84c');
+      return svg.outerHTML;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="pr-name">${p.name}</div>
+      <div class="pr-dice">${diceHtml || '<span style="font-style:italic;font-size:0.72rem;color:rgba(245,230,200,0.3)">éliminé</span>'}</div>
+    `;
+    grid.appendChild(card);
+  });
+
+  renderStatsOverlay(document.getElementById('stats-panel-overlay'));
+}
+
+function renderStatsOverlay(panel) {
+  if (!panel) return;
+  const counts = buildStatCounts(serverPlayers);
+  const total = counts.reduce((a,b)=>a+b,0);
+  panel.innerHTML = buildStatsHTML(counts, total);
+}
+
+function buildStatCounts(players) {
+  const counts = [0,0,0,0,0,0];
+  Object.values(players).forEach(p => {
+    if (p.dice && p.diceCount > 0)
+      p.dice.slice(0, p.diceCount).forEach(v => { if(v>=1&&v<=6) counts[v-1]++; });
+  });
+  return counts;
+}
+
+function buildStatsHTML(counts, total) {
+  const labels = ['Paco','2','3','4','5','6'];
+  return `
+    <div style="margin-top:14px;background:var(--dark2);border:1px solid rgba(201,168,76,0.18);border-radius:12px;padding:13px;">
+      <div class="stats-title">TOTAL — ${total} dé${total>1?'s':''}</div>
+      <div class="stats-grid">
+        ${counts.map((c,i) => `
+          <div class="stat-item">
+            <div style="height:28px;display:flex;align-items:center;justify-content:center;">
+              ${i===0
+                ? `<svg viewBox="0 0 38 38" width="26" height="26">${buildDiceSVG(1,'#c9a84c')}</svg>`
+                : `<svg viewBox="0 0 38 38" width="26" height="26">${buildDiceSVG(i+1,'#888')}</svg>`
+              }
+            </div>
+            <span class="stat-count">${c}</span>
+            <span class="stat-label">${labels[i]}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function closeResults() {
+  document.getElementById('results-overlay').classList.remove('active');
+}
+
+function toggleStats() {
+  state.statsVisible = !state.statsVisible;
+  const panel = document.getElementById('stats-panel');
+  if (state.statsVisible) {
+    panel.classList.add('visible');
+    const counts = buildStatCounts(serverPlayers);
+    const total = counts.reduce((a,b)=>a+b,0);
+    panel.innerHTML = `<div class="stats-title">TOTAL DES DÉS</div><div class="stats-grid">
+      ${counts.map((c,i) => `
+        <div class="stat-item">
+          <div style="height:28px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 38 38" width="24" height="24">${buildDiceSVG(i+1,'#c9a84c')}</svg>
+          </div>
+          <span class="stat-count">${c}</span>
+          <span class="stat-label">${['Paco','2','3','4','5','6'][i]}</span>
+        </div>
+      `).join('')}
+    </div>`;
+  } else {
+    panel.classList.remove('visible');
+  }
+}
+
+// ===================== DICE ADJUST =====================
+function enableDiceAdjust(on) {
+  document.getElementById('dice-adjust-row').classList.toggle('enabled', on);
+}
+
+function adjustDice(delta) {
+  const n = state.myDiceCount + delta;
+  if (n < 0) { showToast('Déjà à 0 !'); return; }
+  if (n > MAX_DICE) { showToast('Maximum 5 dés !'); return; }
+  state.myDiceCount = n;
+
+  send({
+    type: 'update_player',
+    name: state.name,
+    diceCount: n,
+    dice: state.myDice,
+    color: state.color,
+    ready: false,
+  });
+
+  updateDiceCountText();
+  renderCup();
+
+  if (n === 0) showToast('Tu es éliminé ! ☠️');
+  else if (delta > 0) showToast(`+1 dé ! (${n} au total)`);
+  else showToast(`−1 dé. (${n} restant${n>1?'s':''})`);
+}
+
+function newRound() {
+  state.revealed = false;
+  state.readyToReveal = false;
+  state.cupLifted = false;
+  state.statsVisible = false;
+
+  if (state.myDiceCount > 0) {
+    state.myDice = rollDice(state.myDiceCount);
+    send({
+      type: 'update_player',
+      name: state.name,
+      dice: state.myDice,
+      diceCount: state.myDiceCount,
+      color: state.color,
+      ready: false,
+    });
+  }
+
+  enableDiceAdjust(false);
+  document.getElementById('stats-panel').classList.remove('visible');
+  document.getElementById('btn-info').classList.remove('visible');
+  closeResults();
+  renderCup();
+  updateDiceCountText();
+
+  const btn = document.getElementById('btn-reveal');
+  btn.textContent = '🫳 MENTEUR — Révéler';
+  btn.classList.remove('confirmed');
+  document.getElementById('reveal-status').textContent = 'Appuyez si vous criez "Menteur !"';
+}
+
+// ===================== UTILS =====================
+function updateDiceCountText() {
+  const el = document.getElementById('dice-count-text');
+  if (!el) return;
+  const n = state.myDiceCount;
+  el.textContent = n <= 0 ? 'Éliminé ☠️' : `${n} dé${n>1?'s':''}`;
+}
+
+function updateOnlineBadge() {
+  const el = document.getElementById('online-badge');
+  if (!el) return;
+  const n = Object.keys(serverPlayers).length;
+  const names = Object.keys(serverPlayers).join(', ');
+  el.textContent = n > 0 ? `🟢 ${n} joueur${n>1?'s':''} : ${names}` : 'En attente de joueurs...';
+}
+
+function shadeColor(hex, pct) {
+  let r = parseInt(hex.slice(1,3),16);
+  let g = parseInt(hex.slice(3,5),16);
+  let b = parseInt(hex.slice(5,7),16);
+  r = Math.max(0, Math.min(255, r + Math.round(pct * 2.55)));
+  g = Math.max(0, Math.min(255, g + Math.round(pct * 2.55)));
+  b = Math.max(0, Math.min(255, b + Math.round(pct * 2.55)));
+  return '#' + [r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ===================== INIT =====================
+connectWS();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "perudo-server",
+  "version": "1.0.0",
+  "description": "Perudo dice game server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.17.0",
+    "express": "^4.18.2"
+  }
+}
