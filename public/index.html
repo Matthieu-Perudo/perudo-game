@@ -547,7 +547,7 @@ input:focus { border-color:var(--gold); }
   <div class="setup-card">
     <div class="input-group">
       <label>Votre prénom</label>
-      <input type="text" id="inp-name" placeholder="Ex: Maqueue" maxlength="12" autocomplete="off">
+      <input type="text" id="inp-name" placeholder="Ex: Hugo" maxlength="12" autocomplete="off">
     </div>
     <div class="input-group">
       <label>Couleur de votre gobelet</label>
@@ -641,7 +641,9 @@ let state = {
   revealed: false,
   statsVisible: false,
   roomCode: '',
-  roundLocked: false, // empêche double-clic global
+  roundLocked:   false, // ce joueur a déjà cliqué ±1
+  roundExecuted: false, // l'action a déjà été exécutée cette manche
+  _fallbackTimer: null,
 };
 
 let ws = null;
@@ -712,8 +714,9 @@ function handleRoomState(msg) {
     send({ type: 'new_round' }); // réinitialise ready côté serveur
   }
 
-  // Si le serveur signale un round_result (quelqu'un a cliqué ±1)
-  if (msg.roundResult !== undefined && state.roundLocked) {
+  // Le serveur broadcast le round_result → tout le monde l'exécute (une seule fois)
+  if (msg.roundResult !== undefined && !state.roundExecuted) {
+    state.roundExecuted = true;
     executeRoundResult(msg.roundResult);
   }
 }
@@ -924,15 +927,24 @@ function updateRevealUI() {
 }
 
 function showRevealedUI() {
-  // Cacher le bouton menteur
   const btn = document.getElementById('btn-reveal');
   if (btn) { btn.style.display = 'none'; }
   document.getElementById('reveal-status').style.display = 'none';
 
-  // Montrer stats + ajustement
   document.getElementById('info-row').style.display = 'flex';
   document.getElementById('round-adjust').classList.add('visible');
-  state.roundLocked = false;
+
+  // Réinitialiser les gardes pour cette manche
+  state.roundLocked   = false;
+  state.roundExecuted = false;
+
+  // Réactiver les boutons au cas où ils étaient désactivés
+  const bm = document.getElementById('btn-minus');
+  const bp = document.getElementById('btn-plus');
+  if (bm) bm.disabled = false;
+  if (bp) bp.disabled = false;
+  const note = document.getElementById('adjust-note');
+  if (note) note.textContent = 'Un seul clic pour tous — relance la manche';
 }
 
 // ===================== BOUTON i =====================
@@ -972,23 +984,39 @@ function buildStatCounts(players) {
 
 // ===================== ROUND RESULT (±1 global) =====================
 function applyRoundResult(delta) {
-  if (state.roundLocked) { showToast('Déjà cliqué !'); return; }
+  if (state.roundLocked || state.roundExecuted) { showToast('Déjà cliqué !'); return; }
   state.roundLocked = true;
 
-  // Désactiver les deux boutons pour tout le monde via broadcast
+  // Désactiver immédiatement les boutons localement (feedback visuel)
+  const bm = document.getElementById('btn-minus');
+  const bp = document.getElementById('btn-plus');
+  if (bm) bm.disabled = true;
+  if (bp) bp.disabled = true;
+  const note = document.getElementById('adjust-note');
+  if (note) note.textContent = '⏳ En attente de confirmation…';
+
+  // Envoyer au serveur → il broadcast à tous → handleRoomState → executeRoundResult
   send({
-    type: 'round_result',
+    type:  'round_result',
     delta,
-    name: state.name,
-    code: state.roomCode,
+    name:  state.name,
+    code:  state.roomCode,
   });
 
-  // Exécuter localement aussi (on reçoit le message en echo normalement,
-  // mais on peut agir directement si le serveur ne supporte pas round_result)
-  executeRoundResult(delta);
+  // Fallback : si le serveur ne supporte pas round_result,
+  // on exécute quand même localement après 500ms sans réponse
+  state._fallbackTimer = setTimeout(() => {
+    if (!state.roundExecuted) {
+      state.roundExecuted = true;
+      executeRoundResult(delta);
+    }
+  }, 800);
 }
 
 function executeRoundResult(delta) {
+  // Annuler le fallback si le serveur a répondu
+  if (state._fallbackTimer) { clearTimeout(state._fallbackTimer); state._fallbackTimer = null; }
+
   // Désactiver les boutons visuellement
   const bm = document.getElementById('btn-minus');
   const bp = document.getElementById('btn-plus');
@@ -1011,6 +1039,7 @@ function startNewRound(delta) {
   state.cupLifted      = false;
   state.statsVisible   = false;
   state.roundLocked    = false;
+  state.roundExecuted  = false;
 
   if (n > 0) {
     state.myDice = rollDice(n);
