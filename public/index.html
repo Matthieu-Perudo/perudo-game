@@ -8,15 +8,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap');
 
 :root {
-  --gold: #c9a84c;
-  --gold-light: #e8c97a;
-  --dark: #0e0a06;
-  --dark2: #1a1208;
-  --dark3: #251a0d;
-  --cream: #f5e6c8;
-  --red: #8b1a1a;
-  --red-light: #c0392b;
-  --player-color: #c9a84c;
+  /* Palette Perudo : bois chaud, rouge profond, cuir, ivoire */
+  --wood:       #6b3a1f;
+  --wood-light: #9b5a2f;
+  --wood-dark:  #3d1f08;
+  --leather:    #8b4513;
+  --gold:       #c8a55a;
+  --gold-light: #e2c47e;
+  --cream:      #f2e4c4;
+  --red:        #7b1c1c;
+  --red-bright: #b02a2a;
+  --dark:       #1a0c05;
+  --dark2:      #241208;
+  --dark3:      #301a0a;
+  --player-color: #c8a55a;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -28,8 +33,14 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background-image:
-    radial-gradient(ellipse at 50% 0%, #2a1a05 0%, transparent 60%),
-    repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(201,168,76,0.015) 40px, rgba(201,168,76,0.015) 41px);
+    radial-gradient(ellipse at 50% 0%, #2e1205 0%, transparent 65%),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 30px,
+      rgba(107,58,31,0.06) 30px,
+      rgba(107,58,31,0.06) 31px
+    );
 }
 
 /* =================== SETUP =================== */
@@ -48,51 +59,52 @@ body {
   font-family: 'Cinzel', serif;
   font-size: clamp(3rem,12vw,5rem);
   font-weight: 900;
-  letter-spacing: 0.15em;
-  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 50%, #8a6020 100%);
+  letter-spacing: 0.18em;
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 45%, var(--wood) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1;
+  text-shadow: none;
 }
 .title-block p {
   font-style:italic;
-  color:rgba(245,230,200,0.5);
-  font-size:0.95rem;
-  letter-spacing:0.3em;
+  color:rgba(242,228,196,0.45);
+  font-size:0.88rem;
+  letter-spacing:0.35em;
   text-transform:uppercase;
-  margin-top:6px;
+  margin-top:8px;
 }
 
 .gold-line {
-  width:100%; max-width:300px; height:1px;
+  width:100%; max-width:280px; height:1px;
   background:linear-gradient(90deg,transparent,var(--gold),transparent);
 }
 
 .setup-card {
   background:var(--dark2);
-  border:1px solid rgba(201,168,76,0.2);
+  border:1px solid rgba(200,165,90,0.22);
   border-radius:16px;
-  padding:28px 24px;
-  width:100%; max-width:380px;
+  padding:28px 22px;
+  width:100%; max-width:370px;
   display:flex; flex-direction:column; gap:18px;
-  box-shadow:0 20px 60px rgba(0,0,0,0.6),inset 0 1px 0 rgba(201,168,76,0.1);
+  box-shadow:0 20px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(200,165,90,0.1);
 }
 
 .input-group { display:flex; flex-direction:column; gap:7px; }
 
 label {
   font-family:'Cinzel',serif;
-  font-size:0.62rem;
-  letter-spacing:0.2em;
+  font-size:0.6rem;
+  letter-spacing:0.22em;
   text-transform:uppercase;
   color:var(--gold);
-  opacity:0.8;
+  opacity:0.75;
 }
 
 input[type="text"], input[type="number"] {
   background:var(--dark3);
-  border:1px solid rgba(201,168,76,0.25);
+  border:1px solid rgba(200,165,90,0.22);
   border-radius:8px;
   color:var(--cream);
   font-family:'Crimson Pro',serif;
@@ -104,34 +116,28 @@ input[type="text"], input[type="number"] {
 }
 input:focus { border-color:var(--gold); }
 
-/* Color picker */
-.color-row {
-  display:flex; gap:10px; flex-wrap:wrap;
-}
+.color-row { display:flex; gap:10px; flex-wrap:wrap; }
 .color-swatch {
   width:36px; height:36px;
   border-radius:50%;
   cursor:pointer;
   border:3px solid transparent;
   transition:all 0.2s;
-  position:relative;
 }
-.color-swatch.selected {
-  border-color: white;
-  transform: scale(1.15);
-}
+.color-swatch.selected { border-color:white; transform:scale(1.18); }
 
 .btn-primary {
-  background:linear-gradient(135deg,var(--gold) 0%,#8a6020 100%);
-  border:none; border-radius:10px;
-  color:var(--dark);
+  background:linear-gradient(135deg,var(--wood-light) 0%,var(--wood-dark) 100%);
+  border:1px solid rgba(200,165,90,0.3);
+  border-radius:10px;
+  color:var(--gold-light);
   font-family:'Cinzel',serif;
   font-size:0.82rem; font-weight:700;
   letter-spacing:0.15em;
   padding:15px 24px;
   cursor:pointer; text-transform:uppercase;
   transition:all 0.2s;
-  box-shadow:0 4px 20px rgba(201,168,76,0.3);
+  box-shadow:0 4px 20px rgba(107,58,31,0.5);
   width:100%; margin-top:6px;
 }
 .btn-primary:active { transform:scale(0.97); opacity:0.9; }
@@ -142,9 +148,9 @@ input:focus { border-color:var(--gold); }
   font-style:italic;
   min-height:18px;
 }
-.status-ok { color: #5cb85c; }
-.status-err { color: #e74c3c; }
-.status-wait { color: rgba(245,230,200,0.4); }
+.status-ok   { color: #6dba6d; }
+.status-err  { color: #e05050; }
+.status-wait { color: rgba(242,228,196,0.35); }
 
 /* =================== GAME =================== */
 #game-screen {
@@ -158,10 +164,9 @@ input:focus { border-color:var(--gold); }
 .player-header {
   width:100%;
   background:linear-gradient(180deg,var(--dark2) 0%,transparent 100%);
-  border-bottom:1px solid rgba(201,168,76,0.12);
+  border-bottom:1px solid rgba(200,165,90,0.1);
   padding:18px 24px 14px;
   text-align:center;
-  position:relative;
 }
 
 .player-dot {
@@ -183,7 +188,7 @@ input:focus { border-color:var(--gold); }
 
 .dice-count-display {
   font-size:0.82rem;
-  color:rgba(245,230,200,0.45);
+  color:rgba(242,228,196,0.4);
   font-style:italic;
   margin-top:2px;
 }
@@ -202,52 +207,54 @@ input:focus { border-color:var(--gold); }
 
 .cup-hint {
   font-style:italic;
-  color:rgba(245,230,200,0.3);
+  color:rgba(242,228,196,0.28);
   font-size:0.85rem;
   text-align:center;
+  user-select:none;
 }
 
 .cup-wrapper {
   position:relative;
   width:170px; height:210px;
-  cursor:pointer;
   user-select:none;
+  touch-action:none;
 }
 
 .cup-svg {
   width:100%; height:100%;
-  filter:drop-shadow(0 8px 24px rgba(0,0,0,0.8));
-  transition:transform 0.45s cubic-bezier(0.34,1.56,0.64,1);
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,0.85));
+  transition:transform 0.38s cubic-bezier(0.34,1.4,0.64,1);
   transform-origin:center bottom;
+  pointer-events:none;
 }
 
-.cup-wrapper.lifted .cup-svg { transform:translateY(-105px); }
+.cup-wrapper.lifted .cup-svg { transform:translateY(-108px); }
 
 .dice-under {
   position:absolute;
-  bottom:12px; left:50%;
+  bottom:14px; left:50%;
   transform:translateX(-50%);
   display:flex;
-  gap:7px;
+  gap:6px;
   flex-wrap:wrap;
   justify-content:center;
-  width:155px;
+  width:158px;
   opacity:0;
-  transition:opacity 0.3s 0.25s;
+  transition:opacity 0.25s 0.2s;
   pointer-events:none;
 }
 .cup-wrapper.lifted .dice-under { opacity:1; }
 
-/* =================== 3D DICE SVG =================== */
+/* =================== 3D DICE =================== */
 .die-3d {
   width:38px; height:38px;
   flex-shrink:0;
-  animation:dieAppear 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  animation:dieAppear 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
   filter:drop-shadow(0 3px 6px rgba(0,0,0,0.7));
 }
 @keyframes dieAppear {
   from { transform:scale(0) rotate(-20deg); opacity:0; }
-  to { transform:scale(1) rotate(0deg); opacity:1; }
+  to   { transform:scale(1) rotate(0deg);   opacity:1; }
 }
 
 /* =================== ACTIONS =================== */
@@ -261,13 +268,13 @@ input:focus { border-color:var(--gold); }
 
 .sep {
   width:100%; height:1px;
-  background:linear-gradient(90deg,transparent,rgba(201,168,76,0.15),transparent);
-  margin:3px 0;
+  background:linear-gradient(90deg,transparent,rgba(200,165,90,0.14),transparent);
+  margin:2px 0;
 }
 
 .btn-reveal {
-  background:linear-gradient(135deg,var(--red) 0%,#5a0f0f 100%);
-  border:1px solid rgba(139,26,26,0.5);
+  background:linear-gradient(135deg,var(--red) 0%,#4a0e0e 100%);
+  border:1px solid rgba(176,42,42,0.45);
   border-radius:10px;
   color:var(--cream);
   font-family:'Cinzel',serif;
@@ -276,95 +283,59 @@ input:focus { border-color:var(--gold); }
   padding:14px 20px;
   cursor:pointer; text-transform:uppercase;
   transition:all 0.2s;
-  box-shadow:0 4px 20px rgba(139,26,26,0.35);
+  box-shadow:0 4px 20px rgba(123,28,28,0.45);
   width:100%;
 }
 .btn-reveal:active { transform:scale(0.97); }
 .btn-reveal.confirmed {
   background:linear-gradient(135deg,#1a3a1a 0%,#0e1f0e 100%);
-  border-color:rgba(50,150,50,0.4);
-  color:rgba(100,200,100,0.8);
+  border-color:rgba(60,160,60,0.4);
+  color:rgba(110,210,110,0.85);
 }
 
 .reveal-status {
   font-size:0.78rem;
-  color:rgba(245,230,200,0.38);
+  color:rgba(242,228,196,0.35);
   font-style:italic;
   text-align:center;
 }
 
-.dice-adjust-row {
+/* =================== STATS (bouton i) =================== */
+.info-row {
   display:flex;
   align-items:center;
+  justify-content:flex-end;
   gap:10px;
-  opacity:0.25;
-  pointer-events:none;
-  transition:opacity 0.3s;
-}
-.dice-adjust-row.enabled {
-  opacity:1;
-  pointer-events:all;
-}
-
-.dice-adjust {
-  display:flex; align-items:center;
-  background:var(--dark2);
-  border:1px solid rgba(201,168,76,0.2);
-  border-radius:10px;
-  overflow:hidden;
-  flex:1;
-}
-.btn-adj {
-  background:var(--dark3);
-  border:none;
-  color:var(--gold);
-  font-family:'Cinzel',serif;
-  font-size:1.4rem; font-weight:700;
-  padding:13px 26px;
-  cursor:pointer;
-  transition:background 0.15s;
-  flex-shrink:0;
-}
-.btn-adj:active { background:rgba(201,168,76,0.15); }
-.adj-label {
-  flex:1; text-align:center;
-  font-family:'Cinzel',serif;
-  font-size:0.58rem;
-  letter-spacing:0.12em;
-  color:rgba(245,230,200,0.45);
-  line-height:1.4;
 }
 
 .btn-info {
-  background:rgba(201,168,76,0.08);
-  border:1px solid rgba(201,168,76,0.25);
+  background:rgba(200,165,90,0.1);
+  border:1px solid rgba(200,165,90,0.28);
   border-radius:50%;
   color:var(--gold);
   font-family:'Cinzel',serif;
   font-size:1rem; font-weight:700;
-  width:36px; height:36px;
+  width:38px; height:38px;
   cursor:pointer;
-  display:none;
+  display:flex;
   align-items:center; justify-content:center;
-  flex-shrink:0;
   transition:all 0.2s;
+  flex-shrink:0;
 }
-.btn-info.visible { display:flex; }
-.btn-info:active { background:rgba(201,168,76,0.3); }
+.btn-info:active { background:rgba(200,165,90,0.3); }
 
-/* Stats Panel */
 #stats-panel {
   display:none;
   background:var(--dark3);
-  border:1px solid rgba(201,168,76,0.2);
+  border:1px solid rgba(200,165,90,0.18);
   border-radius:12px;
   padding:14px;
 }
 #stats-panel.visible { display:block; }
 .stats-title {
   font-family:'Cinzel',serif;
-  font-size:0.65rem;
-  letter-spacing:0.15em;
+  font-size:0.62rem;
+  letter-spacing:0.18em;
   color:var(--gold);
   margin-bottom:10px;
   text-align:center;
@@ -389,24 +360,92 @@ input:focus { border-color:var(--gold); }
   margin:3px 0 1px;
 }
 .stat-label {
-  font-size:0.58rem;
-  color:rgba(245,230,200,0.3);
+  font-size:0.56rem;
+  color:rgba(242,228,196,0.3);
   letter-spacing:0.05em;
   text-transform:uppercase;
+}
+
+/* =================== ROUND ADJUST (−1 / +1) =================== */
+#round-adjust {
+  display:none;
+  flex-direction:column;
+  gap:10px;
+  width:100%;
+}
+#round-adjust.visible { display:flex; }
+
+.adjust-title {
+  font-family:'Cinzel',serif;
+  font-size:0.62rem;
+  letter-spacing:0.18em;
+  color:var(--gold);
+  text-align:center;
+}
+.adjust-btn-row {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.btn-adjust-dice {
+  padding:16px 8px;
+  border-radius:10px;
+  font-family:'Cinzel',serif;
+  font-size:0.85rem; font-weight:700;
+  letter-spacing:0.08em;
+  cursor:pointer;
+  transition:all 0.2s;
+  border:none;
+  text-transform:uppercase;
+}
+.btn-adjust-dice.minus {
+  background:linear-gradient(135deg,var(--red) 0%,#4a0e0e 100%);
+  color:var(--cream);
+  box-shadow:0 4px 16px rgba(123,28,28,0.4);
+}
+.btn-adjust-dice.plus {
+  background:linear-gradient(135deg,#1a4a1a 0%,#0b2e0b 100%);
+  color:#8de08d;
+  box-shadow:0 4px 16px rgba(20,100,20,0.4);
+}
+.btn-adjust-dice:active { transform:scale(0.96); }
+.btn-adjust-dice:disabled {
+  opacity:0.3;
+  cursor:not-allowed;
+  transform:none;
+}
+
+.adjust-note {
+  font-size:0.72rem;
+  color:rgba(242,228,196,0.3);
+  font-style:italic;
+  text-align:center;
+}
+
+/* =================== ONLINE BADGE =================== */
+.online-badge {
+  background:rgba(200,165,90,0.06);
+  border:1px solid rgba(200,165,90,0.13);
+  border-radius:20px;
+  color:rgba(242,228,196,0.35);
+  font-size:0.72rem;
+  font-style:italic;
+  padding:5px 14px;
+  text-align:center;
 }
 
 /* =================== RESULTS OVERLAY =================== */
 #results-overlay {
   display:none;
   position:fixed; inset:0;
-  background:rgba(0,0,0,0.88);
+  background:rgba(0,0,0,0.9);
   z-index:100;
   flex-direction:column;
   align-items:center;
   justify-content:flex-start;
   padding:20px 16px 40px;
   overflow-y:auto;
-  backdrop-filter:blur(4px);
+  backdrop-filter:blur(5px);
 }
 #results-overlay.active { display:flex; }
 
@@ -433,9 +472,9 @@ input:focus { border-color:var(--gold); }
   border-radius:12px;
   padding:12px 14px;
   display:flex; align-items:center; gap:10px;
-  border-left:4px solid var(--card-color, #c9a84c);
+  border-left:4px solid var(--card-color, #c8a55a);
 }
-.player-result-card.eliminated { opacity:0.35; }
+.player-result-card.eliminated { opacity:0.3; }
 
 .pr-name {
   font-family:'Cinzel',serif;
@@ -448,15 +487,10 @@ input:focus { border-color:var(--gold); }
   display:flex; gap:4px; flex-wrap:wrap; flex:1;
 }
 
-#stats-panel-overlay {
-  width:100%; max-width:400px;
-  margin-top:12px;
-}
-
 .close-results-btn {
   margin-top:18px;
   background:var(--dark2);
-  border:1px solid rgba(201,168,76,0.2);
+  border:1px solid rgba(200,165,90,0.18);
   border-radius:10px;
   color:var(--cream);
   font-family:'Cinzel',serif;
@@ -476,7 +510,7 @@ input:focus { border-color:var(--gold); }
 .eliminated-area h2 {
   font-family:'Cinzel',serif;
   font-size:1.8rem;
-  color:var(--red-light);
+  color:var(--red-bright);
 }
 
 /* Toast */
@@ -498,18 +532,6 @@ input:focus { border-color:var(--gold); }
   max-width:280px;
 }
 #toast.show { transform:translateX(-50%) translateY(0); }
-
-/* Players online badge */
-.online-badge {
-  background:rgba(201,168,76,0.07);
-  border:1px solid rgba(201,168,76,0.15);
-  border-radius:20px;
-  color:rgba(245,230,200,0.4);
-  font-size:0.72rem;
-  font-style:italic;
-  padding:5px 14px;
-  text-align:center;
-}
 </style>
 </head>
 <body>
@@ -527,22 +549,19 @@ input:focus { border-color:var(--gold); }
       <label>Votre prénom</label>
       <input type="text" id="inp-name" placeholder="Ex: Hugo" maxlength="12" autocomplete="off">
     </div>
-
     <div class="input-group">
       <label>Couleur de votre gobelet</label>
       <div class="color-row" id="color-row"></div>
     </div>
-
     <div class="input-group">
       <label>Code de partie (même pour tous)</label>
       <input type="text" id="inp-code" value="perudo" maxlength="16" autocomplete="off">
     </div>
-
     <div id="connection-status" class="status-wait">Connexion au serveur...</div>
-    <button class="btn-primary" id="btn-join" onclick="joinGame()" disabled>Rejoindre</button>
+    <button class="btn-primary" id="btn-join" onclick="joinGame()" disabled>Rejoindre la partie</button>
   </div>
 
-  <p style="font-size:0.72rem;color:rgba(245,230,200,0.25);text-align:center;font-style:italic;">Chaque joueur ouvre ce lien sur son téléphone</p>
+  <p style="font-size:0.72rem;color:rgba(242,228,196,0.22);text-align:center;font-style:italic;">Chaque joueur ouvre ce lien sur son téléphone</p>
 </div>
 
 <!-- GAME -->
@@ -565,28 +584,34 @@ input:focus { border-color:var(--gold); }
 
     <div class="sep"></div>
 
-    <div class="dice-adjust-row" id="dice-adjust-row">
-      <div class="dice-adjust">
-        <button class="btn-adj" onclick="adjustDice(-1)">−</button>
-        <div class="adj-label">Perdant −1 dé<br>Exact +1 dé</div>
-        <button class="btn-adj" onclick="adjustDice(+1)">+</button>
-      </div>
+    <!-- Stats toggle (visible après révélation) -->
+    <div class="info-row" id="info-row" style="display:none;">
+      <span style="font-size:0.72rem;color:rgba(242,228,196,0.35);font-style:italic;flex:1;">Statistiques des dés</span>
       <button class="btn-info" id="btn-info" onclick="toggleStats()">i</button>
     </div>
-
     <div id="stats-panel"></div>
+
+    <!-- Adjust round (visible après révélation, 1 clic global) -->
+    <div id="round-adjust">
+      <div class="adjust-title">⚖️ RÉSULTAT DE LA MANCHE</div>
+      <div class="adjust-btn-row">
+        <button class="btn-adjust-dice minus" id="btn-minus" onclick="applyRoundResult(-1)">☠️ −1 dé<br><small style="font-size:0.6rem;opacity:0.6;font-weight:400">Le menteur perd</small></button>
+        <button class="btn-adjust-dice plus"  id="btn-plus"  onclick="applyRoundResult(+1)">🎲 +1 dé<br><small style="font-size:0.6rem;opacity:0.6;font-weight:400">Le devineur gagne</small></button>
+      </div>
+      <div class="adjust-note" id="adjust-note">Un seul clic pour tous — relance la manche</div>
+    </div>
+
     <div class="online-badge" id="online-badge">0 joueur(s) connecté(s)</div>
   </div>
 </div>
 
-<!-- RESULTS -->
+<!-- RESULTS (overlay dice reveal) -->
 <div id="results-overlay">
   <div class="results-header">
     <h2>⚔️ RÉVÉLATION</h2>
-    <p style="font-style:italic;color:rgba(245,230,200,0.35);font-size:0.82rem">Tous les dés sont dévoilés</p>
+    <p style="font-style:italic;color:rgba(242,228,196,0.3);font-size:0.82rem">Tous les dés sont dévoilés</p>
   </div>
   <div class="all-players-grid" id="all-players-grid"></div>
-  <div id="stats-panel-overlay"></div>
   <button class="close-results-btn" onclick="closeResults()">← Fermer</button>
 </div>
 
@@ -595,18 +620,18 @@ input:focus { border-color:var(--gold); }
 <script>
 // ===================== CONFIG =====================
 const PLAYER_COLORS = [
-  { name:'Rouge',    hex:'#d63031' },
-  { name:'Bleu',     hex:'#0984e3' },
-  { name:'Vert',     hex:'#00b894' },
-  { name:'Jaune',    hex:'#fdcb6e' },
-  { name:'Violet',   hex:'#a29bfe' },
-  { name:'Orange',   hex:'#e17055' },
-  { name:'Rose',     hex:'#fd79a8' },
-  { name:'Blanc',    hex:'#dfe6e9' },
+  { name:'Rouge',   hex:'#c0392b' },
+  { name:'Bleu',    hex:'#1a6ea8' },
+  { name:'Vert',    hex:'#1e7a4a' },
+  { name:'Bois',    hex:'#9b5a2f' },
+  { name:'Violet',  hex:'#7c5cbf' },
+  { name:'Orange',  hex:'#d4651a' },
+  { name:'Rose',    hex:'#c0527a' },
+  { name:'Ivoire',  hex:'#d4c090' },
 ];
 
 const MAX_DICE = 5;
-const PACO_FACE = 1; // face 1 = Paco
+const PACO_FACE = 1;
 
 let state = {
   name: '', color: PLAYER_COLORS[0].hex,
@@ -616,12 +641,13 @@ let state = {
   revealed: false,
   statsVisible: false,
   roomCode: '',
+  roundLocked: false, // empêche double-clic global
 };
 
 let ws = null;
 let serverPlayers = {};
 
-// ===================== COLORS SETUP =====================
+// ===================== COLORS =====================
 (function buildColorPicker() {
   const row = document.getElementById('color-row');
   PLAYER_COLORS.forEach((c, i) => {
@@ -641,32 +667,29 @@ let serverPlayers = {};
 // ===================== WEBSOCKET =====================
 function connectWS() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  const host = location.host;
-  ws = new WebSocket(`${proto}://${host}`);
+  ws = new WebSocket(`${proto}://${location.host}`);
 
   ws.onopen = () => {
-    document.getElementById('connection-status').textContent = '✓ Connecté au serveur';
-    document.getElementById('connection-status').className = 'status-ok';
+    setStatus('✓ Connecté au serveur', 'status-ok');
     document.getElementById('btn-join').disabled = false;
   };
-
   ws.onclose = () => {
-    document.getElementById('connection-status').textContent = '✗ Déconnecté — rechargez la page';
-    document.getElementById('connection-status').className = 'status-err';
+    setStatus('✗ Déconnecté — rechargez', 'status-err');
     document.getElementById('btn-join').disabled = true;
     setTimeout(connectWS, 3000);
   };
-
-  ws.onerror = () => {
-    document.getElementById('connection-status').textContent = '✗ Erreur de connexion';
-    document.getElementById('connection-status').className = 'status-err';
-  };
+  ws.onerror = () => setStatus('✗ Erreur de connexion', 'status-err');
 
   ws.onmessage = (event) => {
-    let msg;
-    try { msg = JSON.parse(event.data); } catch { return; }
+    let msg; try { msg = JSON.parse(event.data); } catch { return; }
     if (msg.type === 'room_state') handleRoomState(msg);
   };
+}
+
+function setStatus(txt, cls) {
+  const el = document.getElementById('connection-status');
+  el.textContent = txt;
+  el.className = cls;
 }
 
 function send(obj) {
@@ -678,18 +701,20 @@ function handleRoomState(msg) {
   updateOnlineBadge();
   updateRevealUI();
 
-  // Check if all active players are ready → reveal
   const active = Object.values(serverPlayers).filter(p => !p.eliminated && p.diceCount > 0);
   const allReady = active.length >= 2 && active.every(p => p.ready);
 
   if (allReady && !state.revealed) {
     state.revealed = true;
-    showResultsOverlay();
-    enableDiceAdjust(true);
-    document.getElementById('btn-info').classList.add('visible');
+    // Lever le gobelet localement
+    liftCupRevealed();
+    showRevealedUI();
+    send({ type: 'new_round' }); // réinitialise ready côté serveur
+  }
 
-    // reset everyone's ready
-    send({ type: 'new_round' });
+  // Si le serveur signale un round_result (quelqu'un a cliqué ±1)
+  if (msg.roundResult !== undefined && state.roundLocked) {
+    executeRoundResult(msg.roundResult);
   }
 }
 
@@ -707,78 +732,76 @@ function joinGame() {
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('game-screen').style.display = 'flex';
 
-  // Apply color
   document.documentElement.style.setProperty('--player-color', state.color);
-  document.getElementById('player-dot').style.background = state.color;
-  document.getElementById('player-dot').style.boxShadow = `0 0 8px ${state.color}`;
+  document.getElementById('player-dot').style.cssText = `background:${state.color};box-shadow:0 0 8px ${state.color}`;
   document.getElementById('display-name').textContent = name.toUpperCase();
   updateDiceCountText();
 
-  send({
-    type: 'join',
-    code,
-    name,
-    color: state.color,
-    dice: state.myDice,
-    diceCount: state.myDiceCount,
-  });
-
+  send({ type:'join', code, name, color:state.color, dice:state.myDice, diceCount:state.myDiceCount });
   renderCup();
 }
 
 // ===================== DICE =====================
 function rollDice(n) {
-  return Array.from({length: n}, () => Math.floor(Math.random() * 6) + 1);
+  return Array.from({length:n}, () => Math.floor(Math.random()*6)+1);
 }
 
 // ===================== CUP =====================
 function renderCup() {
   const area = document.getElementById('cup-area');
   if (state.myDiceCount <= 0) {
-    area.innerHTML = `<div class="eliminated-area"><h2>☠️ Éliminé</h2><p style="color:rgba(245,230,200,0.35);font-style:italic;margin-top:6px">Tu n'as plus de dés</p></div>`;
+    area.innerHTML = `<div class="eliminated-area"><h2>☠️ Éliminé</h2><p style="color:rgba(242,228,196,0.3);font-style:italic;margin-top:6px">Tu n'as plus de dés</p></div>`;
     return;
   }
-  const lifted = state.cupLifted;
-  const c = state.color;
-  const cDark = shadeColor(c, -40);
-  const cLight = shadeColor(c, 30);
+
+  const c     = state.color;
+  const cDark = shadeColor(c, -45);
+  const cLit  = shadeColor(c, 35);
 
   area.innerHTML = `
-    <p class="cup-hint">${lifted ? 'Touchez pour recacher' : 'Touchez le gobelet pour voir vos dés'}</p>
-    <div class="cup-wrapper${lifted ? ' lifted' : ''}" id="cup-wrapper" onclick="toggleCup()">
-      ${buildCupSVG(c, cDark, cLight)}
+    <p class="cup-hint" id="cup-hint">Maintenez le gobelet pour voir vos dés</p>
+    <div class="cup-wrapper" id="cup-wrapper">
+      ${buildCupSVG(c, cDark, cLit)}
       <div class="dice-under" id="dice-display"></div>
     </div>
   `;
-  if (lifted) renderDiceUnder();
+
+  // Press-and-hold : visible seulement pendant qu'on maintient
+  const wrapper = document.getElementById('cup-wrapper');
+
+  function pressStart(e) {
+    e.preventDefault();
+    if (state.revealed) return; // après révélation c'est géré autrement
+    wrapper.classList.add('lifted');
+    document.getElementById('cup-hint').textContent = 'Relâchez pour recacher';
+    renderDiceUnder();
+  }
+  function pressEnd(e) {
+    e.preventDefault();
+    if (state.revealed) return;
+    wrapper.classList.remove('lifted');
+    document.getElementById('cup-hint').textContent = 'Maintenez le gobelet pour voir vos dés';
+    const dd = document.getElementById('dice-display');
+    if (dd) dd.innerHTML = '';
+  }
+
+  wrapper.addEventListener('touchstart', pressStart, { passive:false });
+  wrapper.addEventListener('touchend',   pressEnd,   { passive:false });
+  wrapper.addEventListener('touchcancel',pressEnd,   { passive:false });
+  wrapper.addEventListener('mousedown',  pressStart);
+  wrapper.addEventListener('mouseup',    pressEnd);
+  wrapper.addEventListener('mouseleave', pressEnd);
 }
 
-function buildCupSVG(c, cDark, cLight) {
-  return `<svg class="cup-svg" viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style="stop-color:${cDark}"/>
-        <stop offset="25%" style="stop-color:${c}"/>
-        <stop offset="55%" style="stop-color:${cLight}"/>
-        <stop offset="80%" style="stop-color:${c}"/>
-        <stop offset="100%" style="stop-color:${cDark}"/>
-      </linearGradient>
-      <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style="stop-color:${cDark}"/>
-        <stop offset="50%" style="stop-color:${cLight}"/>
-        <stop offset="100%" style="stop-color:${cDark}"/>
-      </linearGradient>
-    </defs>
-    <ellipse cx="80" cy="195" rx="52" ry="5" fill="rgba(0,0,0,0.35)"/>
-    <path d="M 30 40 L 20 185 Q 20 192 30 192 L 130 192 Q 140 192 140 185 L 130 40 Z" fill="url(#cg)"/>
-    <path d="M 35 80 L 125 80" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
-    <path d="M 33 120 L 127 120" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
-    <path d="M 31 160 L 129 160" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
-    <path d="M 52 45 L 47 180" stroke="rgba(255,255,255,0.1)" stroke-width="3" stroke-linecap="round" fill="none"/>
-    <ellipse cx="80" cy="40" rx="52" ry="12" fill="url(#rg)"/>
-    <ellipse cx="80" cy="40" rx="50" ry="10" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-    <ellipse cx="80" cy="42" rx="43" ry="8" fill="#0e0a06" opacity="0.9"/>
-  </svg>`;
+function liftCupRevealed() {
+  // Après révélation : le gobelet reste levé
+  const wrapper = document.getElementById('cup-wrapper');
+  if (!wrapper) return;
+  wrapper.classList.add('lifted');
+  state.cupLifted = true;
+  renderDiceUnder();
+  const hint = document.getElementById('cup-hint');
+  if (hint) hint.textContent = 'Tous les dés sont révélés';
 }
 
 function renderDiceUnder() {
@@ -786,114 +809,107 @@ function renderDiceUnder() {
   if (!container) return;
   container.innerHTML = '';
   state.myDice.slice(0, state.myDiceCount).forEach((val, i) => {
-    const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    el.setAttribute('viewBox', '0 0 38 38');
-    el.setAttribute('width', '38');
-    el.setAttribute('height', '38');
+    const el = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    el.setAttribute('viewBox','0 0 38 38');
+    el.setAttribute('width','38');
+    el.setAttribute('height','38');
     el.className.baseVal = 'die-3d';
-    el.style.animationDelay = (i * 0.07) + 's';
+    el.style.animationDelay = (i*0.07)+'s';
     el.innerHTML = buildDiceSVG(val, state.color);
     container.appendChild(el);
   });
 }
 
-// Build a realistic 3D die face in SVG
-function buildDiceSVG(value, baseColor) {
-  const c = baseColor;
-  const cDark = shadeColor(c, -50);
-  const cLight = shadeColor(c, 40);
+function buildCupSVG(c, cDark, cLight) {
+  return `<svg class="cup-svg" viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   style="stop-color:${cDark}"/>
+        <stop offset="28%"  style="stop-color:${c}"/>
+        <stop offset="55%"  style="stop-color:${cLight}"/>
+        <stop offset="80%"  style="stop-color:${c}"/>
+        <stop offset="100%" style="stop-color:${cDark}"/>
+      </linearGradient>
+      <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   style="stop-color:${cDark}"/>
+        <stop offset="50%"  style="stop-color:${cLight}"/>
+        <stop offset="100%" style="stop-color:${cDark}"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="80" cy="195" rx="52" ry="5" fill="rgba(0,0,0,0.35)"/>
+    <path d="M 30 40 L 20 185 Q 20 192 30 192 L 130 192 Q 140 192 140 185 L 130 40 Z" fill="url(#cg)"/>
+    <path d="M 35 80  L 125 80"  stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
+    <path d="M 33 120 L 127 120" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
+    <path d="M 31 160 L 129 160" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
+    <path d="M 52 45 L 47 180"   stroke="rgba(255,255,255,0.09)" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <ellipse cx="80" cy="40" rx="52" ry="12" fill="url(#rg)"/>
+    <ellipse cx="80" cy="40" rx="50" ry="10" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
+    <ellipse cx="80" cy="42" rx="43" ry="8"  fill="#1a0c05" opacity="0.92"/>
+  </svg>`;
+}
 
-  // Dot positions for each face value
+function buildDiceSVG(value, baseColor) {
+  const c     = baseColor;
+  const cDark = shadeColor(c,-50);
+  const cLit  = shadeColor(c, 40);
+
   const dotLayouts = {
-    1: [[19,19]],
-    2: [[10,10],[28,28]],
-    3: [[10,10],[19,19],[28,28]],
-    4: [[10,10],[28,10],[10,28],[28,28]],
-    5: [[10,10],[28,10],[19,19],[10,28],[28,28]],
-    6: [[10,9],[28,9],[10,19],[28,19],[10,29],[28,29]],
+    1:[[19,19]],
+    2:[[10,10],[28,28]],
+    3:[[10,10],[19,19],[28,28]],
+    4:[[10,10],[28,10],[10,28],[28,28]],
+    5:[[10,10],[28,10],[19,19],[10,28],[28,28]],
+    6:[[10,9],[28,9],[10,19],[28,19],[10,29],[28,29]],
   };
 
   let content = '';
-
   if (value === PACO_FACE) {
-    // Paco: draw a bird/parrot silhouette
     content = `
-      <ellipse cx="19" cy="19" rx="8" ry="9" fill="white" opacity="0.9"/>
+      <ellipse cx="19" cy="19" rx="8" ry="9" fill="white" opacity="0.88"/>
       <ellipse cx="17" cy="14" rx="3.5" ry="4" fill="white" opacity="0.95"/>
       <circle cx="16" cy="13" r="1" fill="${cDark}" opacity="0.8"/>
       <path d="M14 16 Q11 15 10 17" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
       <path d="M19 24 Q19 28 17 30" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M19 24 Q21 28 23 29" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    `;
+      <path d="M19 24 Q21 28 23 29" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
   } else {
-    const dots = dotLayouts[value] || [];
-    content = dots.map(([x, y]) =>
-      `<circle cx="${x}" cy="${y}" r="2.8" fill="white" opacity="0.92"/>`
-    ).join('');
+    (dotLayouts[value]||[]).forEach(([x,y]) => {
+      content += `<circle cx="${x}" cy="${y}" r="2.8" fill="white" opacity="0.9"/>`;
+    });
   }
 
+  const uid = value+c.replace('#','');
   return `
     <defs>
-      <linearGradient id="dg${value}${c.replace('#','')}" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:${cLight}"/>
-        <stop offset="60%" style="stop-color:${c}"/>
+      <linearGradient id="dg${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   style="stop-color:${cLit}"/>
+        <stop offset="60%"  style="stop-color:${c}"/>
         <stop offset="100%" style="stop-color:${cDark}"/>
       </linearGradient>
     </defs>
-    <!-- Shadow -->
     <ellipse cx="19" cy="35" rx="14" ry="3" fill="rgba(0,0,0,0.4)"/>
-    <!-- Right face (darker) -->
     <path d="M 32 6 L 36 10 L 36 31 L 32 32 Z" fill="${cDark}" opacity="0.85"/>
-    <!-- Bottom face -->
     <path d="M 6 30 L 32 30 L 36 31 L 10 34 Z" fill="${shadeColor(c,-30)}" opacity="0.9"/>
-    <!-- Main face -->
-    <rect x="4" y="4" width="28" height="28" rx="5" fill="url(#dg${value}${c.replace('#','')})"/>
-    <!-- Shine -->
-    <ellipse cx="11" cy="9" rx="5" ry="3" fill="white" opacity="0.18" transform="rotate(-20 11 9)"/>
-    ${content}
-  `;
-}
-
-function toggleCup() {
-  state.cupLifted = !state.cupLifted;
-  const wrapper = document.getElementById('cup-wrapper');
-  if (!wrapper) { renderCup(); return; }
-  wrapper.classList.toggle('lifted', state.cupLifted);
-  const hint = document.querySelector('.cup-hint');
-  if (hint) hint.textContent = state.cupLifted ? 'Touchez pour recacher' : 'Touchez le gobelet pour voir vos dés';
-  if (state.cupLifted) renderDiceUnder();
-  else {
-    const dd = document.getElementById('dice-display');
-    if (dd) dd.innerHTML = '';
-  }
+    <rect x="4" y="4" width="28" height="28" rx="5" fill="url(#dg${uid})"/>
+    <ellipse cx="11" cy="9" rx="5" ry="3" fill="white" opacity="0.16" transform="rotate(-20 11 9)"/>
+    ${content}`;
 }
 
 // ===================== REVEAL =====================
 function toggleReady() {
   if (state.myDiceCount <= 0) { showToast('Tu es éliminé !'); return; }
   state.readyToReveal = !state.readyToReveal;
-
-  send({
-    type: 'update_player',
-    name: state.name,
-    ready: state.readyToReveal,
-    dice: state.myDice,
-    diceCount: state.myDiceCount,
-    color: state.color,
-  });
-
+  send({ type:'update_player', name:state.name, ready:state.readyToReveal,
+         dice:state.myDice, diceCount:state.myDiceCount, color:state.color });
   updateRevealUI();
 }
 
 function updateRevealUI() {
   const btn = document.getElementById('btn-reveal');
   const status = document.getElementById('reveal-status');
-  if (!btn) return;
-
-  if (state.revealed) return;
+  if (!btn || state.revealed) return;
 
   if (state.readyToReveal) {
-    btn.textContent = '✓ Prêt — En attente des autres...';
+    btn.textContent = '✓ Prêt — En attente des autres…';
     btn.classList.add('confirmed');
   } else {
     btn.textContent = '🫳 MENTEUR — Révéler';
@@ -902,49 +918,47 @@ function updateRevealUI() {
 
   const active = Object.values(serverPlayers).filter(p => !p.eliminated && p.diceCount > 0);
   const readyCount = active.filter(p => p.ready).length;
-  if (status) {
-    status.textContent = active.length > 0
-      ? `${readyCount}/${active.length} joueur(s) prêts`
-      : 'En attente de joueurs...';
+  if (status) status.textContent = active.length
+    ? `${readyCount}/${active.length} joueur(s) prêts`
+    : 'En attente de joueurs…';
+}
+
+function showRevealedUI() {
+  // Cacher le bouton menteur
+  const btn = document.getElementById('btn-reveal');
+  if (btn) { btn.style.display = 'none'; }
+  document.getElementById('reveal-status').style.display = 'none';
+
+  // Montrer stats + ajustement
+  document.getElementById('info-row').style.display = 'flex';
+  document.getElementById('round-adjust').classList.add('visible');
+  state.roundLocked = false;
+}
+
+// ===================== BOUTON i =====================
+function toggleStats() {
+  state.statsVisible = !state.statsVisible;
+  const panel = document.getElementById('stats-panel');
+  if (state.statsVisible) {
+    panel.classList.add('visible');
+    const counts = buildStatCounts(serverPlayers);
+    const total  = counts.reduce((a,b)=>a+b,0);
+    panel.innerHTML = `
+      <div class="stats-title">TOTAL — ${total} dé${total>1?'s':''} en jeu</div>
+      <div class="stats-grid">
+        ${counts.map((c,i) => `
+          <div class="stat-item">
+            <div style="height:28px;display:flex;align-items:center;justify-content:center;">
+              <svg viewBox="0 0 38 38" width="24" height="24">${buildDiceSVG(i+1, i===0?'#c8a55a':'#888')}</svg>
+            </div>
+            <span class="stat-count">${c}</span>
+            <span class="stat-label">${['Paco','2','3','4','5','6'][i]}</span>
+          </div>`).join('')}
+      </div>`;
+  } else {
+    panel.classList.remove('visible');
+    panel.innerHTML = '';
   }
-}
-
-function showResultsOverlay() {
-  const overlay = document.getElementById('results-overlay');
-  const grid = document.getElementById('all-players-grid');
-  overlay.classList.add('active');
-  grid.innerHTML = '';
-
-  Object.values(serverPlayers).forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'player-result-card' + (p.eliminated || p.diceCount <= 0 ? ' eliminated' : '');
-    card.style.setProperty('--card-color', p.color || '#c9a84c');
-
-    const diceHtml = (p.dice || []).slice(0, p.diceCount).map(v => {
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('viewBox', '0 0 38 38');
-      svg.setAttribute('width', '32');
-      svg.setAttribute('height', '32');
-      svg.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))';
-      svg.innerHTML = buildDiceSVG(v, p.color || '#c9a84c');
-      return svg.outerHTML;
-    }).join('');
-
-    card.innerHTML = `
-      <div class="pr-name">${p.name}</div>
-      <div class="pr-dice">${diceHtml || '<span style="font-style:italic;font-size:0.72rem;color:rgba(245,230,200,0.3)">éliminé</span>'}</div>
-    `;
-    grid.appendChild(card);
-  });
-
-  renderStatsOverlay(document.getElementById('stats-panel-overlay'));
-}
-
-function renderStatsOverlay(panel) {
-  if (!panel) return;
-  const counts = buildStatCounts(serverPlayers);
-  const total = counts.reduce((a,b)=>a+b,0);
-  panel.innerHTML = buildStatsHTML(counts, total);
 }
 
 function buildStatCounts(players) {
@@ -956,113 +970,85 @@ function buildStatCounts(players) {
   return counts;
 }
 
-function buildStatsHTML(counts, total) {
-  const labels = ['Paco','2','3','4','5','6'];
-  return `
-    <div style="margin-top:14px;background:var(--dark2);border:1px solid rgba(201,168,76,0.18);border-radius:12px;padding:13px;">
-      <div class="stats-title">TOTAL — ${total} dé${total>1?'s':''}</div>
-      <div class="stats-grid">
-        ${counts.map((c,i) => `
-          <div class="stat-item">
-            <div style="height:28px;display:flex;align-items:center;justify-content:center;">
-              ${i===0
-                ? `<svg viewBox="0 0 38 38" width="26" height="26">${buildDiceSVG(1,'#c9a84c')}</svg>`
-                : `<svg viewBox="0 0 38 38" width="26" height="26">${buildDiceSVG(i+1,'#888')}</svg>`
-              }
-            </div>
-            <span class="stat-count">${c}</span>
-            <span class="stat-label">${labels[i]}</span>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
+// ===================== ROUND RESULT (±1 global) =====================
+function applyRoundResult(delta) {
+  if (state.roundLocked) { showToast('Déjà cliqué !'); return; }
+  state.roundLocked = true;
+
+  // Désactiver les deux boutons pour tout le monde via broadcast
+  send({
+    type: 'round_result',
+    delta,
+    name: state.name,
+    code: state.roomCode,
+  });
+
+  // Exécuter localement aussi (on reçoit le message en echo normalement,
+  // mais on peut agir directement si le serveur ne supporte pas round_result)
+  executeRoundResult(delta);
+}
+
+function executeRoundResult(delta) {
+  // Désactiver les boutons visuellement
+  const bm = document.getElementById('btn-minus');
+  const bp = document.getElementById('btn-plus');
+  if (bm) bm.disabled = true;
+  if (bp) bp.disabled = true;
+
+  const note = document.getElementById('adjust-note');
+  if (note) note.textContent = '⏳ Relance dans 2 secondes…';
+
+  setTimeout(() => startNewRound(delta), 2000);
+}
+
+function startNewRound(delta) {
+  // Appliquer le delta au joueur local
+  const n = Math.max(0, Math.min(MAX_DICE, state.myDiceCount + delta));
+  state.myDiceCount = n;
+
+  state.revealed       = false;
+  state.readyToReveal  = false;
+  state.cupLifted      = false;
+  state.statsVisible   = false;
+  state.roundLocked    = false;
+
+  if (n > 0) {
+    state.myDice = rollDice(n);
+  }
+
+  // Reset UI
+  const btn = document.getElementById('btn-reveal');
+  if (btn) {
+    btn.style.display = '';
+    btn.textContent   = '🫳 MENTEUR — Révéler';
+    btn.classList.remove('confirmed');
+  }
+  document.getElementById('reveal-status').style.display = '';
+  document.getElementById('reveal-status').textContent   = 'Appuyez si vous criez "Menteur !"';
+  document.getElementById('info-row').style.display      = 'none';
+  document.getElementById('round-adjust').classList.remove('visible');
+  document.getElementById('stats-panel').classList.remove('visible');
+  document.getElementById('stats-panel').innerHTML = '';
+
+  updateDiceCountText();
+  renderCup();
+
+  send({
+    type:'update_player',
+    name:state.name,
+    dice:state.myDice,
+    diceCount:state.myDiceCount,
+    color:state.color,
+    ready:false,
+  });
+
+  if (n === 0) showToast('☠️ Tu es éliminé !');
+  else if (delta > 0) showToast(`+1 dé ! Tu as ${n} dé${n>1?'s':''}`);
+  else showToast(`−1 dé. Il te reste ${n} dé${n>1?'s':''}`);
 }
 
 function closeResults() {
   document.getElementById('results-overlay').classList.remove('active');
-}
-
-function toggleStats() {
-  state.statsVisible = !state.statsVisible;
-  const panel = document.getElementById('stats-panel');
-  if (state.statsVisible) {
-    panel.classList.add('visible');
-    const counts = buildStatCounts(serverPlayers);
-    const total = counts.reduce((a,b)=>a+b,0);
-    panel.innerHTML = `<div class="stats-title">TOTAL DES DÉS</div><div class="stats-grid">
-      ${counts.map((c,i) => `
-        <div class="stat-item">
-          <div style="height:28px;display:flex;align-items:center;justify-content:center;">
-            <svg viewBox="0 0 38 38" width="24" height="24">${buildDiceSVG(i+1,'#c9a84c')}</svg>
-          </div>
-          <span class="stat-count">${c}</span>
-          <span class="stat-label">${['Paco','2','3','4','5','6'][i]}</span>
-        </div>
-      `).join('')}
-    </div>`;
-  } else {
-    panel.classList.remove('visible');
-  }
-}
-
-// ===================== DICE ADJUST =====================
-function enableDiceAdjust(on) {
-  document.getElementById('dice-adjust-row').classList.toggle('enabled', on);
-}
-
-function adjustDice(delta) {
-  const n = state.myDiceCount + delta;
-  if (n < 0) { showToast('Déjà à 0 !'); return; }
-  if (n > MAX_DICE) { showToast('Maximum 5 dés !'); return; }
-  state.myDiceCount = n;
-
-  send({
-    type: 'update_player',
-    name: state.name,
-    diceCount: n,
-    dice: state.myDice,
-    color: state.color,
-    ready: false,
-  });
-
-  updateDiceCountText();
-  renderCup();
-
-  if (n === 0) showToast('Tu es éliminé ! ☠️');
-  else if (delta > 0) showToast(`+1 dé ! (${n} au total)`);
-  else showToast(`−1 dé. (${n} restant${n>1?'s':''})`);
-}
-
-function newRound() {
-  state.revealed = false;
-  state.readyToReveal = false;
-  state.cupLifted = false;
-  state.statsVisible = false;
-
-  if (state.myDiceCount > 0) {
-    state.myDice = rollDice(state.myDiceCount);
-    send({
-      type: 'update_player',
-      name: state.name,
-      dice: state.myDice,
-      diceCount: state.myDiceCount,
-      color: state.color,
-      ready: false,
-    });
-  }
-
-  enableDiceAdjust(false);
-  document.getElementById('stats-panel').classList.remove('visible');
-  document.getElementById('btn-info').classList.remove('visible');
-  closeResults();
-  renderCup();
-  updateDiceCountText();
-
-  const btn = document.getElementById('btn-reveal');
-  btn.textContent = '🫳 MENTEUR — Révéler';
-  btn.classList.remove('confirmed');
-  document.getElementById('reveal-status').textContent = 'Appuyez si vous criez "Menteur !"';
 }
 
 // ===================== UTILS =====================
@@ -1076,26 +1062,27 @@ function updateDiceCountText() {
 function updateOnlineBadge() {
   const el = document.getElementById('online-badge');
   if (!el) return;
-  const n = Object.keys(serverPlayers).length;
-  const names = Object.keys(serverPlayers).join(', ');
-  el.textContent = n > 0 ? `🟢 ${n} joueur${n>1?'s':''} : ${names}` : 'En attente de joueurs...';
+  const players = Object.values(serverPlayers);
+  const n = players.length;
+  const names = players.map(p=>p.name).join(', ');
+  el.textContent = n > 0 ? `🟢 ${n} joueur${n>1?'s':''} : ${names}` : 'En attente de joueurs…';
 }
 
 function shadeColor(hex, pct) {
   let r = parseInt(hex.slice(1,3),16);
   let g = parseInt(hex.slice(3,5),16);
   let b = parseInt(hex.slice(5,7),16);
-  r = Math.max(0, Math.min(255, r + Math.round(pct * 2.55)));
-  g = Math.max(0, Math.min(255, g + Math.round(pct * 2.55)));
-  b = Math.max(0, Math.min(255, b + Math.round(pct * 2.55)));
-  return '#' + [r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  r = Math.max(0,Math.min(255,r+Math.round(pct*2.55)));
+  g = Math.max(0,Math.min(255,g+Math.round(pct*2.55)));
+  b = Math.max(0,Math.min(255,b+Math.round(pct*2.55)));
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2400);
+  setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
 // ===================== INIT =====================
