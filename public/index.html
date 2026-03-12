@@ -468,6 +468,1028 @@ input:focus { border-color:var(--gold); }
   <div class="setup-card">
     <div class="input-group">
       <label>Votre prénom</label>
+      <input type="text" id="inp-name" placeholder="Ex: Maqueue t’es trop fort" maxlength="12" autocomplete="off">
+    </div>
+    <div class="input-group">
+      <label>Couleur de votre gobelet</label>
+      <div class="color-row" id="color-row"></div>
+    </div>
+    <div class="input-group">
+      <label>Code de partie (même pour tous)</label>
+      <input type="text" id="inp-code" value="perudo" maxlength="16" autocomplete="off">
+    </div>
+    <div id="connection-status" class="status-wait">Connexion au serveur...</div>
+    <button class="btn-primary" id="btn-join" onclick="joinGame()" disabled>Rejoindre la partie</button>
+  </div>
+  <p style="font-size:0.72rem;color:rgba(242,228,196,0.35);text-align:center;font-style:italic;text-shadow:0 1px 5px rgba(0,0,0,0.95);">Chaque joueur ouvre ce lien sur son téléphone</p>
+</div>
+
+<!-- GAME -->
+<div id="game-screen">
+  <div class="player-header">
+    <div>
+      <span class="player-dot" id="player-dot"></span>
+      <span class="player-name-hdr" id="display-name">—</span>
+    </div>
+    <div class="dice-count-display" id="dice-count-text">5 dés</div>
+  </div>
+
+  <!-- SCOREBOARD -->
+  <div id="scoreboard">
+    <div class="sb-title">🎲 Tableau des joueurs</div>
+    <div id="sb-rows"></div>
+  </div>
+
+  <div class="cup-area" id="cup-area"></div>
+
+  <div class="actions-panel">
+    <div class="sep"></div>
+
+    <button class="btn-reveal" id="btn-reveal" onclick="toggleReady()">🫳 MENTEUR — Révéler</button>
+    <div class="reveal-status" id="reveal-status">Appuyez si vous criez "Menteur !"</div>
+
+    <div class="sep"></div>
+
+    <div class="info-row" id="info-row" style="display:none;">
+      <span style="font-size:0.72rem;color:rgba(242,228,196,0.42);font-style:italic;flex:1;text-shadow:0 1px 4px rgba(0,0,0,0.9);">Statistiques des dés</span>
+      <button class="btn-info" id="btn-info" onclick="toggleStats()">i</button>
+    </div>
+    <div id="stats-panel"></div>
+
+    <div id="round-adjust">
+      <div class="adjust-title">⚖️ RÉSULTAT DE LA MANCHE</div>
+      <div class="adjust-btn-row">
+        <button class="btn-adjust-dice minus"   id="btn-minus"   onclick="castVote(-1)">☠️ −1<br><small style="font-size:0.52rem;opacity:0.55;font-weight:400;letter-spacing:0;text-transform:none;">j'ai perdu</small></button>
+        <button class="btn-adjust-dice neutral" id="btn-neutral" onclick="castVote(0)">— Rien<br><small style="font-size:0.52rem;opacity:0.55;font-weight:400;letter-spacing:0;text-transform:none;">inchangé</small></button>
+        <button class="btn-adjust-dice plus"    id="btn-plus"    onclick="castVote(+1)">🎲 +1<br><small style="font-size:0.52rem;opacity:0.55;font-weight:400;letter-spacing:0;text-transform:none;">j'ai gagné</small></button>
+      </div>
+      <div class="vote-counter" id="vote-counter"></div>
+      <div class="adjust-note" id="adjust-note">Chacun vote — la manche reprend quand tous ont voté</div>
+      <div class="vote-status" id="vote-status"></div>
+    </div>
+
+    <div class="online-badge" id="online-badge">0 joueur(s) connecté(s)</div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results-overlay">
+  <div class="results-header">
+    <h2>⚔️ RÉVÉLATION</h2>
+    <p style="font-style:italic;color:rgba(242,228,196,0.3);font-size:0.82rem">Tous les dés sont dévoilés</p>
+  </div>
+  <div class="all-players-grid" id="all-players-grid"></div>
+  <button class="close-results-btn" onclick="closeResults()">← Fermer</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const PLAYER_COLORS = [
+  { name:'Rouge',  hex:'#c0392b' },
+  { name:'Bleu',   hex:'#1a6ea8' },
+  { name:'Vert',   hex:'#1e7a4a' },
+  { name:'Bois',   hex:'#9b5a2f' },
+  { name:'Violet', hex:'#7c5cbf' },
+  { name:'Orange', hex:'#d4651a' },
+  { name:'Rose',   hex:'#c0527a' },
+  { name:'Ivoire', hex:'#d4c090' },
+];
+
+const MAX_DICE = 5;
+const PACO_FACE = 1;
+
+let state = {
+  name:'', color: PLAYER_COLORS[0].hex,
+  myDice:[], myDiceCount: MAX_DICE,
+  cupLifted:false, readyToReveal:false, revealed:false,
+  statsVisible:false, roomCode:'',
+  roundLocked:false, roundExecuted:false, myVote:undefined,
+};
+
+let ws = null;
+let serverPlayers = {};
+
+// Colors picker
+(function() {
+  const row = document.getElementById('color-row');
+  PLAYER_COLORS.forEach((c,i) => {
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch'+(i===0?' selected':'');
+    sw.style.background = c.hex; sw.title = c.name;
+    sw.onclick = () => {
+      document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+      sw.classList.add('selected'); state.color = c.hex;
+    };
+    row.appendChild(sw);
+  });
+})();
+
+// WS
+function connectWS() {
+  const proto = location.protocol==='https:'?'wss':'ws';
+  ws = new WebSocket(`${proto}://${location.host}`);
+  ws.onopen  = () => { setStatus('✓ Connecté au serveur','status-ok'); document.getElementById('btn-join').disabled=false; };
+  ws.onclose = () => { setStatus('✗ Déconnecté — rechargez','status-err'); document.getElementById('btn-join').disabled=true; setTimeout(connectWS,3000); };
+  ws.onerror = () => setStatus('✗ Erreur de connexion','status-err');
+  ws.onmessage = (ev) => {
+    let msg; try{msg=JSON.parse(ev.data);}catch{return;}
+    if(msg.type==='room_state') handleRoomState(msg);
+  };
+}
+function setStatus(txt,cls){ const e=document.getElementById('connection-status'); e.textContent=txt; e.className=cls; }
+function send(obj){ if(ws&&ws.readyState===WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
+
+function handleRoomState(msg) {
+  serverPlayers = msg.players||{};
+  updateOnlineBadge();
+  updateRevealUI();
+  renderScoreboard();
+
+  const active   = Object.values(serverPlayers).filter(p=>!p.eliminated&&p.diceCount>0);
+  const allReady = active.length>=2 && active.every(p=>p.ready);
+
+  if (!state.revealed) {
+    // Phase 1 : tout le monde clique "Menteur"
+    if (allReady) {
+      state.revealed = true;
+      liftCupRevealed();
+      showRevealedUI();
+      send({type:'new_round'}); // reset ready côté serveur
+    }
+  } else {
+    // Phase 2 : tout le monde vote (-1 / 0 / +1)
+    updateVoteStatus();
+    if (!state.roundExecuted && allReady) {
+      state.roundExecuted = true;
+      const me = Object.values(serverPlayers).find(p=>p.name===state.name);
+      const myDelta = (me && me.vote != null) ? me.vote : (state.myVote ?? 0);
+      setTimeout(()=>startNewRound(myDelta), 1000);
+    }
+  }
+}
+
+// Join
+function joinGame() {
+  const name = document.getElementById('inp-name').value.trim();
+  const code = document.getElementById('inp-code').value.trim()||'perudo';
+  if (!name) { showToast('Entrez votre prénom !'); return; }
+  state.name=name; state.roomCode=code;
+  state.myDiceCount=MAX_DICE; state.myDice=rollDice(MAX_DICE);
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('game-screen').style.display='flex';
+  document.documentElement.style.setProperty('--player-color',state.color);
+  document.getElementById('player-dot').style.cssText=`background:${state.color};box-shadow:0 0 8px ${state.color}`;
+  document.getElementById('display-name').textContent=name.toUpperCase();
+  updateDiceCountText();
+  send({type:'join',code,name,color:state.color,dice:state.myDice,diceCount:state.myDiceCount});
+  renderCup(); renderScoreboard();
+}
+
+function rollDice(n){ return Array.from({length:n},()=>Math.floor(Math.random()*6)+1); }
+
+// SCOREBOARD
+function renderScoreboard() {
+  const container = document.getElementById('sb-rows');
+  if (!container) return;
+  const players = Object.values(serverPlayers);
+  if (players.length===0) {
+    container.innerHTML='<div style="font-size:0.62rem;color:rgba(242,200,200,0.28);font-style:italic;text-align:center;padding:4px 0;">En attente de joueurs…</div>';
+    return;
+  }
+  container.innerHTML='';
+  players.forEach((p,idx) => {
+    if (idx>0) {
+      const sep=document.createElement('div'); sep.className='sb-sep'; container.appendChild(sep);
+    }
+    const row=document.createElement('div'); row.className='sb-row';
+    const dot=document.createElement('div'); dot.className='sb-dot';
+    dot.style.background=p.color||'#c8a55a';
+    dot.style.boxShadow=`0 0 5px ${p.color||'#c8a55a'}`;
+    const nm=document.createElement('div'); nm.className='sb-name'+(p.diceCount<=0?' elim':'');
+    nm.textContent=p.name;
+    const dr=document.createElement('div'); dr.className='sb-dice-row';
+    for(let i=0;i<MAX_DICE;i++){
+      const d=document.createElement('div');
+      d.className='sb-die '+(i<(p.diceCount||0)?'alive':'lost');
+      dr.appendChild(d);
+    }
+    row.appendChild(dot); row.appendChild(nm); row.appendChild(dr);
+    container.appendChild(row);
+  });
+}
+
+// CUP
+function renderCup() {
+  const area=document.getElementById('cup-area');
+  if (state.myDiceCount<=0) {
+    area.innerHTML=`<div class="eliminated-area"><h2>☠️ Éliminé</h2><p style="color:rgba(242,228,196,0.45);font-style:italic;margin-top:6px;text-shadow:0 1px 5px rgba(0,0,0,0.9)">Tu n'as plus de dés</p></div>`;
+    return;
+  }
+  const c=state.color, cDark=shadeColor(c,-45), cLit=shadeColor(c,35);
+  area.innerHTML=`
+    <p class="cup-hint" id="cup-hint">Maintenez le gobelet pour voir vos dés</p>
+    <div class="cup-wrapper" id="cup-wrapper">
+      ${buildCupSVG(c,cDark,cLit)}
+      <div class="dice-under" id="dice-display"></div>
+    </div>`;
+  const wrapper=document.getElementById('cup-wrapper');
+  function pressStart(e){ e.preventDefault(); if(state.revealed)return; wrapper.classList.add('lifted'); document.getElementById('cup-hint').textContent='Relâchez pour recacher'; renderDiceUnder(); }
+  function pressEnd(e){ e.preventDefault(); if(state.revealed)return; wrapper.classList.remove('lifted'); document.getElementById('cup-hint').textContent='Maintenez le gobelet pour voir vos dés'; const dd=document.getElementById('dice-display'); if(dd)dd.innerHTML=''; }
+  wrapper.addEventListener('touchstart',pressStart,{passive:false});
+  wrapper.addEventListener('touchend',pressEnd,{passive:false});
+  wrapper.addEventListener('touchcancel',pressEnd,{passive:false});
+  wrapper.addEventListener('mousedown',pressStart);
+  wrapper.addEventListener('mouseup',pressEnd);
+  wrapper.addEventListener('mouseleave',pressEnd);
+}
+
+function liftCupRevealed() {
+  const w=document.getElementById('cup-wrapper'); if(!w)return;
+  w.classList.add('lifted'); state.cupLifted=true; renderDiceUnder();
+  const h=document.getElementById('cup-hint'); if(h)h.textContent='Tous les dés sont révélés';
+}
+
+function renderDiceUnder() {
+  const c=document.getElementById('dice-display'); if(!c)return;
+  c.innerHTML='';
+  state.myDice.slice(0,state.myDiceCount).forEach((val,i)=>{
+    const el=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    el.setAttribute('viewBox','0 0 40 40'); el.setAttribute('width','40'); el.setAttribute('height','40');
+    el.className.baseVal='die-3d'; el.style.animationDelay=(i*0.07)+'s';
+    el.innerHTML=buildDiceSVG(val,state.color); c.appendChild(el);
+  });
+}
+
+function buildCupSVG(c,cDark,cLight){
+  const cMid = shadeColor(c, -15);
+  const cDeep = shadeColor(c, -60);
+  const cEngraving = shadeColor(c, -45);
+  const cHighlight = shadeColor(c, 55);
+  return `<svg class="cup-svg" viewBox="0 0 160 210" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Gradient principal : effet 3D cylindrique -->
+      <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="${cDeep}"/>
+        <stop offset="18%"  stop-color="${cDark}"/>
+        <stop offset="42%"  stop-color="${cHighlight}"/>
+        <stop offset="65%"  stop-color="${c}"/>
+        <stop offset="85%"  stop-color="${cMid}"/>
+        <stop offset="100%" stop-color="${cDeep}"/>
+      </linearGradient>
+      <!-- Gradient vertical pour le fond du gobelet -->
+      <linearGradient id="vg" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="${cLight}" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="${cDark}"  stop-opacity="0.4"/>
+      </linearGradient>
+      <!-- Masque pour la forme ovoïde -->
+      <clipPath id="cupClip">
+        <path d="M 68 8 Q 30 8 22 45 Q 14 82 14 115 Q 14 155 22 175 Q 30 195 80 198 Q 130 195 138 175 Q 146 155 146 115 Q 146 82 138 45 Q 130 8 92 8 Z"/>
+      </clipPath>
+      <filter id="cupShadow">
+        <feDropShadow dx="3" dy="6" stdDeviation="5" flood-color="rgba(0,0,0,0.6)"/>
+      </filter>
+    </defs>
+
+    <!-- Ombre portée -->
+    <ellipse cx="82" cy="205" rx="54" ry="6" fill="rgba(0,0,0,0.45)"/>
+
+    <!-- Corps principal ovoïde (forme Perudo) -->
+    <path d="M 68 8 Q 30 8 22 45 Q 14 82 14 115 Q 14 155 22 175 Q 30 195 80 198 Q 130 195 138 175 Q 146 155 146 115 Q 146 82 138 45 Q 130 8 92 8 Z"
+          fill="url(#cg)" filter="url(#cupShadow)"/>
+
+    <!-- Reflet vertical gauche -->
+    <path d="M 68 8 Q 30 8 22 45 Q 14 82 14 115 Q 14 155 22 175 Q 30 195 80 198 Q 130 195 138 175 Q 146 155 146 115 Q 146 82 138 45 Q 130 8 92 8 Z"
+          fill="url(#vg)"/>
+
+    <!-- ===== GRAVURES AZTÈQUES ===== -->
+    <g clip-path="url(#cupClip)" opacity="0.55">
+
+      <!-- Bande supérieure : motif géométrique -->
+      <rect x="14" y="38" width="132" height="3" fill="${cEngraving}" opacity="0.7"/>
+      <rect x="14" y="44" width="132" height="1.5" fill="${cEngraving}" opacity="0.4"/>
+
+      <!-- Rangée de carrés haut -->
+      <g fill="${cEngraving}" opacity="0.6">
+        ${Array.from({length:9},(_,i)=>`<rect x="${22+i*13}" y="49" width="7" height="7" rx="1"/>`).join('')}
+      </g>
+      <rect x="14" y="59" width="132" height="2" fill="${cEngraving}" opacity="0.5"/>
+
+      <!-- Motif dents de scie milieu-haut -->
+      <polyline points="14,75 24,65 34,75 44,65 54,75 64,65 74,75 84,65 94,75 104,65 114,75 124,65 134,75 144,65 146,72"
+        stroke="${cEngraving}" stroke-width="2" fill="none" opacity="0.5"/>
+
+      <!-- Bande centrale -->
+      <rect x="14" y="95"  width="132" height="2.5" fill="${cEngraving}" opacity="0.6"/>
+      <rect x="14" y="100" width="132" height="1"   fill="${cEngraving}" opacity="0.3"/>
+
+      <!-- Motif losanges / spirales -->
+      <g stroke="${cEngraving}" stroke-width="1.8" fill="none" opacity="0.5">
+        <path d="M 30 108 L 38 116 L 30 124 L 22 116 Z"/>
+        <path d="M 56 108 L 64 116 L 56 124 L 48 116 Z"/>
+        <path d="M 82 108 L 90 116 L 82 124 L 74 116 Z"/>
+        <path d="M 108 108 L 116 116 L 108 124 L 100 116 Z"/>
+        <path d="M 134 108 L 142 116 L 134 124 L 126 116 Z"/>
+      </g>
+
+      <!-- Bande milieu-bas -->
+      <rect x="14" y="130" width="132" height="2.5" fill="${cEngraving}" opacity="0.6"/>
+
+      <!-- Motif dents de scie bas -->
+      <polyline points="14,142 24,132 34,142 44,132 54,142 64,132 74,142 84,132 94,142 104,132 114,142 124,132 134,142 144,132 146,140"
+        stroke="${cEngraving}" stroke-width="2" fill="none" opacity="0.45"/>
+
+      <!-- Rangée de carrés bas -->
+      <g fill="${cEngraving}" opacity="0.55">
+        ${Array.from({length:9},(_,i)=>`<rect x="${22+i*13}" y="148" width="7" height="7" rx="1"/>`).join('')}
+      </g>
+      <rect x="14" y="158" width="132" height="2"   fill="${cEngraving}" opacity="0.5"/>
+      <rect x="14" y="162" width="132" height="3.5" fill="${cEngraving}" opacity="0.65"/>
+
+      <!-- Bande fond -->
+      <rect x="14" y="177" width="132" height="2" fill="${cEngraving}" opacity="0.4"/>
+    </g>
+
+    <!-- ===== SYMBOLE SERPENT / CONDOR (Perudo) ===== -->
+    <g transform="translate(80,75)" opacity="0.82">
+      <!-- Corps serpent spirale -->
+      <path d="M 0 -20 C 14 -20 18 -8 10 0 C 2 8 -10 6 -10 0 C -10 -8 -2 -14 6 -10 C 14 -6 10 6 0 8"
+            stroke="${cHighlight}" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      <!-- Tête serpent -->
+      <ellipse cx="0" cy="10" rx="4" ry="3" fill="${cHighlight}" opacity="0.9"/>
+      <!-- Langue -->
+      <path d="M -2 13 L -5 17 M 2 13 L 5 17" stroke="${cHighlight}" stroke-width="1.2" stroke-linecap="round"/>
+      <!-- Œil -->
+      <circle cx="-1.5" cy="9" r="1" fill="${cDeep}" opacity="0.8"/>
+    </g>
+
+    <!-- Reflet brillant gauche (spéculaire) -->
+    <path d="M 34 20 Q 28 60 26 115 Q 26 150 30 172"
+          stroke="rgba(255,255,255,0.18)" stroke-width="8" fill="none"
+          stroke-linecap="round"/>
+    <path d="M 40 18 Q 34 55 33 100"
+          stroke="rgba(255,255,255,0.08)" stroke-width="4" fill="none"
+          stroke-linecap="round"/>
+
+    <!-- Bord supérieur du gobelet (ouverture) -->
+    <ellipse cx="80" cy="10" rx="24" ry="7" fill="${cDark}" opacity="0.9"/>
+    <ellipse cx="80" cy="10" rx="22" ry="5.5" fill="${cDeep}" opacity="0.95"/>
+    <ellipse cx="80" cy="10" rx="20" ry="4"   fill="rgba(0,0,0,0.85)"/>
+    <!-- Liseré doré du bord -->
+    <ellipse cx="80" cy="10" rx="24" ry="7" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  </svg>`;
+}
+
+function buildDiceSVG(value,baseColor){
+  const c=baseColor, cDark=shadeColor(c,-55), cLit=shadeColor(c,50), cMid=shadeColor(c,-20);
+  // Positions des points — coordonnées sur face 32x32 centrée en (19,19)
+  const dots={
+    1:[[19,19]],
+    2:[[12,12],[26,26]],
+    3:[[12,12],[19,19],[26,26]],
+    4:[[12,12],[26,12],[12,26],[26,26]],
+    5:[[12,12],[26,12],[19,19],[12,26],[26,26]],
+    6:[[12,10],[26,10],[12,19],[26,19],[12,28],[26,28]],
+  };
+  const uid = 'd'+value+c.replace('#','');
+  let face = '';
+
+  if (value === PACO_FACE) {
+    // Condor / aigle Inca stylisé (Paco)
+    face = `
+      <!-- Condor Paco -->
+      <g transform="translate(19,19)">
+        <!-- Corps -->
+        <ellipse cx="0" cy="2" rx="5" ry="6" fill="white" opacity="0.92"/>
+        <!-- Tête -->
+        <circle cx="0" cy="-6" r="4" fill="white" opacity="0.92"/>
+        <!-- Bec -->
+        <path d="M 1 -5 L 5 -3 L 1 -2 Z" fill="${cDark}" opacity="0.85"/>
+        <!-- Œil -->
+        <circle cx="-1" cy="-7" r="1.2" fill="${cDark}" opacity="0.9"/>
+        <!-- Ailes ouvertes -->
+        <path d="M -5 0 Q -12 -4 -13 2 Q -9 4 -5 2 Z" fill="white" opacity="0.88"/>
+        <path d="M  5 0 Q  12 -4  13 2 Q  9 4  5 2 Z" fill="white" opacity="0.88"/>
+        <!-- Queue -->
+        <path d="M -3 7 L 0 12 L 3 7" fill="white" opacity="0.75"/>
+        <!-- Crête tête -->
+        <path d="M -1 -10 Q 0 -14 1 -10" stroke="white" stroke-width="1.2" fill="none" opacity="0.7"/>
+      </g>`;
+  } else {
+    face = (dots[value]||[]).map(([x,y])=>
+      `<circle cx="${x}" cy="${y}" r="3.2" fill="white" opacity="0.95"/>`
+    ).join('');
+  }
+
+  return `
+    <defs>
+      <linearGradient id="${uid}t" x1="20%" y1="0%" x2="80%" y2="100%">
+        <stop offset="0%"   stop-color="${cLit}"/>
+        <stop offset="45%"  stop-color="${c}"/>
+        <stop offset="100%" stop-color="${cDark}"/>
+      </linearGradient>
+      <linearGradient id="${uid}r" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="${cMid}"/>
+        <stop offset="100%" stop-color="${cDark}"/>
+      </linearGradient>
+      <linearGradient id="${uid}b" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="${cDark}"/>
+        <stop offset="100%" stop-color="${shadeColor(c,-40)}"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Ombre -->
+    <ellipse cx="20" cy="36" rx="13" ry="3" fill="rgba(0,0,0,0.45)"/>
+
+    <!-- Face droite (côté) -->
+    <path d="M 32 7 L 37 12 L 37 33 L 32 33 Z" fill="url(#${uid}r)"/>
+    <!-- Face basse -->
+    <path d="M 5 33 L 32 33 L 37 33 L 37 33 L 12 37 Z" fill="url(#${uid}b)"/>
+
+    <!-- Face principale avec coins très arrondis (style Perudo) -->
+    <rect x="4" y="5" width="28" height="28" rx="7" ry="7" fill="url(#${uid}t)"/>
+
+    <!-- Reflet spéculaire -->
+    <ellipse cx="11" cy="10" rx="6" ry="3.5"
+             fill="white" opacity="0.2" transform="rotate(-25 11 10)"/>
+
+    <!-- Contour léger -->
+    <rect x="4" y="5" width="28" height="28" rx="7" ry="7"
+          fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+
+    <!-- Points / Paco -->
+    ${face}
+  `;
+}
+
+// REVEAL
+function toggleReady() {
+  if(state.myDiceCount<=0){showToast('Tu es éliminé !');return;}
+  state.readyToReveal=!state.readyToReveal;
+  send({type:'update_player',name:state.name,ready:state.readyToReveal,dice:state.myDice,diceCount:state.myDiceCount,color:state.color});
+  updateRevealUI();
+}
+
+function updateRevealUI() {
+  const btn=document.getElementById('btn-reveal'), status=document.getElementById('reveal-status');
+  if(!btn||state.revealed) return;
+  if(state.readyToReveal){ btn.textContent='✓ Prêt — En attente des autres…'; btn.classList.add('confirmed'); }
+  else { btn.textContent='🫳 MENTEUR — Révéler'; btn.classList.remove('confirmed'); }
+  const active=Object.values(serverPlayers).filter(p=>!p.eliminated&&p.diceCount>0);
+  const rc=active.filter(p=>p.ready).length;
+  if(status) status.textContent=active.length?`${rc} / ${active.length} joueur${active.length>1?'s':''} prêt${rc>1?'s':''}`:' En attente de joueurs…';
+}
+
+function showRevealedUI() {
+  const btn=document.getElementById('btn-reveal'); if(btn)btn.style.display='none';
+  document.getElementById('reveal-status').style.display='none';
+  document.getElementById('info-row').style.display='flex';
+  document.getElementById('round-adjust').classList.add('visible');
+  state.roundLocked=false; state.roundExecuted=false; state.myVote=undefined;
+  ['btn-minus','btn-neutral','btn-plus'].forEach(id=>{ const b=document.getElementById(id); if(!b)return; b.disabled=false; b.classList.remove('voted'); });
+  const note=document.getElementById('adjust-note'); if(note)note.textContent='Chacun vote — la manche reprend quand tous ont voté';
+  updateVoteStatus();
+}
+
+function toggleStats() {
+  state.statsVisible=!state.statsVisible;
+  const panel=document.getElementById('stats-panel');
+  if(state.statsVisible){
+    panel.classList.add('visible');
+    const counts=buildStatCounts(serverPlayers), total=counts.reduce((a,b)=>a+b,0);
+    panel.innerHTML=`<div class="stats-title">TOTAL — ${total} dé${total>1?'s':''} en jeu</div><div class="stats-grid">
+      ${counts.map((c,i)=>`<div class="stat-item"><div style="height:28px;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 40 40" width="26" height="26">${buildDiceSVG(i+1,i===0?'#c8a55a':'#888')}</svg></div><span class="stat-count">${c}</span><span class="stat-label">${['Paco','2','3','4','5','6'][i]}</span></div>`).join('')}
+    </div>`;
+  } else { panel.classList.remove('visible'); panel.innerHTML=''; }
+}
+
+function buildStatCounts(players){
+  const counts=[0,0,0,0,0,0];
+  Object.values(players).forEach(p=>{ if(p.dice&&p.diceCount>0) p.dice.slice(0,p.diceCount).forEach(v=>{ if(v>=1&&v<=6)counts[v-1]++; }); });
+  return counts;
+}
+
+// VOTE
+function castVote(delta) {
+  if(state.myVote!==undefined){showToast('Tu as déjà voté !');return;}
+  state.myVote=delta;
+  ['btn-minus','btn-neutral','btn-plus'].forEach(id=>{ const b=document.getElementById(id); if(!b)return; b.disabled=true; b.classList.add('voted'); });
+  const note=document.getElementById('adjust-note');
+  const label=delta===-1?'−1 dé':delta===1?'+1 dé':'Rien';
+  if(note)note.textContent=`✓ Tu as voté : ${label} — en attente des autres…`;
+  // On envoie ready:true — le serveur connaît ce champ et le broadcast à tous
+  send({type:'update_player',name:state.name,color:state.color,dice:state.myDice,diceCount:state.myDiceCount,ready:true,vote:delta,hasVoted:true});
+}
+
+function updateVoteStatus() {
+  const panel=document.getElementById('vote-status'), counter=document.getElementById('vote-counter');
+  if(!panel) return;
+  const active=Object.values(serverPlayers).filter(p=>p.diceCount>0);
+  // On utilise ready:true comme signal "a voté" (le serveur le gère nativement)
+  const votedCount=active.filter(p=>p.ready).length, total=active.length;
+
+  if(counter){
+    if(total>0) counter.innerHTML=`<span class="big">${votedCount}</span> / <span class="big">${total}</span> vote${votedCount>1?'s':''}`;
+    else counter.innerHTML='';
+  }
+
+  panel.innerHTML=active.map(p=>{
+    const done=p.ready===true;
+    return `<span class="vote-pip ${done?'done':''}" style="${done?'border-color:'+p.color+';color:'+p.color:''}"><span class="pip-dot" style="${done?'background:'+p.color:''}"></span>${p.name}${done?' ✓':''}</span>`;
+  }).join('');
+}
+
+function startNewRound(delta){
+  const n=Math.max(0,Math.min(MAX_DICE,state.myDiceCount+delta));
+  state.myDiceCount=n;
+  state.revealed=false; state.readyToReveal=false; state.cupLifted=false;
+  state.statsVisible=false; state.roundLocked=false; state.roundExecuted=false; state.myVote=undefined;
+  if(n>0) state.myDice=rollDice(n);
+
+  const btn=document.getElementById('btn-reveal');
+  if(btn){btn.style.display='';btn.textContent='🫳 MENTEUR — Révéler';btn.classList.remove('confirmed');}
+  document.getElementById('reveal-status').style.display='';
+  document.getElementById('reveal-status').textContent='Appuyez si vous criez "Menteur !"';
+  document.getElementById('info-row').style.display='none';
+  document.getElementById('round-adjust').classList.remove('visible');
+  document.getElementById('stats-panel').classList.remove('visible');
+  document.getElementById('stats-panel').innerHTML='';
+  ['btn-minus','btn-neutral','btn-plus'].forEach(id=>{ const b=document.getElementById(id); if(!b)return; b.disabled=false; b.classList.remove('voted'); });
+  const vs=document.getElementById('vote-status'); if(vs)vs.innerHTML='';
+  const vc=document.getElementById('vote-counter'); if(vc)vc.innerHTML='';
+
+  updateDiceCountText(); renderCup();
+  send({type:'update_player',name:state.name,dice:state.myDice,diceCount:state.myDiceCount,color:state.color,ready:false,hasVoted:false,vote:null});
+
+  if(n===0)showToast('☠️ Tu es éliminé !');
+  else if(delta>0)showToast(`+1 dé ! Tu as ${n} dé${n>1?'s':''}`);
+  else if(delta<0)showToast(`−1 dé. Il te reste ${n} dé${n>1?'s':''}`);
+  else showToast(`Manche suivante — ${n} dé${n>1?'s':''} en jeu`);
+}
+
+function closeResults(){ document.getElementById('results-overlay').classList.remove('active'); }
+
+function updateDiceCountText(){
+  const el=document.getElementById('dice-count-text'); if(!el)return;
+  const n=state.myDiceCount; el.textContent=n<=0?'Éliminé ☠️':`${n} dé${n>1?'s':''}`;
+}
+
+function updateOnlineBadge(){
+  const el=document.getElementById('online-badge'); if(!el)return;
+  const players=Object.values(serverPlayers), n=players.length;
+  el.textContent=n>0?`🟢 ${n} joueur${n>1?'s':''} : ${players.map(p=>p.name).join(', ')}`:'En attente de joueurs…';
+}
+
+function shadeColor(hex,pct){
+  let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  r=Math.max(0,Math.min(255,r+Math.round(pct*2.55)));
+  g=Math.max(0,Math.min(255,g+Math.round(pct*2.55)));
+  b=Math.max(0,Math.min(255,b+Math.round(pct*2.55)));
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+connectWS();
+</script>
+</body>
+</html>}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: rgba(8, 3, 1, 0.5);
+  pointer-events: none;
+  z-index: 0;
+}
+#setup-screen, #game-screen, #results-overlay, #toast { position: relative; z-index: 1; }
+
+/* =================== SETUP =================== */
+#setup-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 28px;
+}
+
+.title-block { text-align:center; }
+.title-block h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(3rem,12vw,5rem);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 45%, var(--wood) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+.title-block p {
+  font-style:italic;
+  color:rgba(242,228,196,0.6);
+  font-size:0.88rem;
+  letter-spacing:0.35em;
+  text-transform:uppercase;
+  margin-top:8px;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+}
+
+.gold-line {
+  width:100%; max-width:280px; height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+
+.setup-card {
+  background: rgba(12,5,1,0.72);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border:1px solid rgba(200,165,90,0.25);
+  border-radius:16px;
+  padding:28px 22px;
+  width:100%; max-width:370px;
+  display:flex; flex-direction:column; gap:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(200,165,90,0.12);
+}
+
+.input-group { display:flex; flex-direction:column; gap:7px; }
+
+label {
+  font-family:'Cinzel',serif;
+  font-size:0.6rem;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--gold);
+  opacity:0.8;
+}
+
+input[type="text"] {
+  background: rgba(8,3,0,0.6);
+  backdrop-filter: blur(4px);
+  border:1px solid rgba(200,165,90,0.22);
+  border-radius:8px;
+  color:var(--cream);
+  font-family:'Crimson Pro',serif;
+  font-size:1.2rem;
+  padding:11px 14px;
+  outline:none;
+  transition:border-color 0.2s;
+  width:100%;
+}
+input:focus { border-color:var(--gold); }
+
+.color-row { display:flex; gap:10px; flex-wrap:wrap; }
+.color-swatch {
+  width:36px; height:36px; border-radius:50%;
+  cursor:pointer; border:3px solid transparent; transition:all 0.2s;
+}
+.color-swatch.selected { border-color:white; transform:scale(1.18); }
+
+.btn-primary {
+  background: rgba(100,55,20,0.8);
+  backdrop-filter: blur(6px);
+  border:1px solid rgba(200,165,90,0.35);
+  border-radius:10px;
+  color:var(--gold-light);
+  font-family:'Cinzel',serif;
+  font-size:0.82rem; font-weight:700;
+  letter-spacing:0.15em;
+  padding:15px 24px;
+  cursor:pointer; text-transform:uppercase;
+  transition:all 0.2s;
+  box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  width:100%; margin-top:6px;
+}
+.btn-primary:active { transform:scale(0.97); opacity:0.85; }
+
+#connection-status { font-size:0.75rem; text-align:center; font-style:italic; min-height:18px; }
+.status-ok   { color: #6dba6d; }
+.status-err  { color: #e05050; }
+.status-wait { color: rgba(242,228,196,0.35); }
+
+/* =================== GAME =================== */
+#game-screen {
+  display:none; min-height:100vh;
+  flex-direction:column; align-items:center; padding-bottom:40px;
+}
+
+.player-header {
+  width:100%;
+  background: rgba(10,4,1,0.65);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom:1px solid rgba(200,165,90,0.1);
+  padding:14px 24px 11px; text-align:center;
+}
+.player-dot {
+  display:inline-block; width:10px; height:10px; border-radius:50%;
+  background:var(--player-color); margin-right:8px; vertical-align:middle;
+  box-shadow:0 0 8px var(--player-color);
+}
+.player-name-hdr {
+  font-family:'Cinzel',serif; font-size:1.05rem;
+  letter-spacing:0.15em; color:var(--player-color);
+}
+.dice-count-display {
+  font-size:0.82rem; color:rgba(242,228,196,0.45); font-style:italic; margin-top:2px;
+}
+
+/* =================== SCOREBOARD #6D071A =================== */
+#scoreboard {
+  width: calc(100% - 36px);
+  margin: 12px 18px 0;
+  background: rgba(109, 7, 26, 0.68);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(220, 60, 80, 0.28);
+  border-radius: 12px;
+  padding: 10px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: 0 4px 24px rgba(109,7,26,0.35), inset 0 1px 0 rgba(255,100,100,0.07);
+}
+.sb-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.52rem;
+  letter-spacing: 0.22em;
+  color: rgba(242,200,200,0.4);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.sb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+.sb-dot {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sb-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  color: var(--cream);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sb-name.elim { opacity: 0.3; text-decoration: line-through; }
+.sb-dice-row {
+  display: flex; gap: 4px; align-items: center; flex-shrink: 0;
+}
+.sb-die {
+  width: 13px; height: 13px;
+  border-radius: 3px;
+  border: 1.5px solid;
+  display: inline-block;
+  position: relative;
+  flex-shrink: 0;
+}
+.sb-die.alive {
+  background: rgba(80,210,80,0.2);
+  border-color: rgba(90,230,90,0.55);
+}
+.sb-die.alive::after {
+  content: '';
+  position: absolute;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: rgba(90,230,90,0.8);
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+}
+.sb-die.lost {
+  background: rgba(180,30,30,0.15);
+  border-color: rgba(200,50,50,0.3);
+}
+.sb-sep {
+  width: 100%; height: 1px;
+  background: rgba(220,60,80,0.12);
+  margin: 0;
+}
+
+/* =================== CUP AREA =================== */
+.cup-area {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:20px 24px 16px; gap:14px; min-height:42vh;
+}
+.cup-hint {
+  font-style:italic; color:rgba(242,228,196,0.65);
+  font-size:0.85rem; text-align:center; user-select:none;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+}
+.cup-wrapper {
+  position:relative; width:170px; height:210px;
+  user-select:none; touch-action:none;
+}
+.cup-svg {
+  width:100%; height:100%;
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,0.85));
+  transition:transform 0.38s cubic-bezier(0.34,1.4,0.64,1);
+  transform-origin:center bottom; pointer-events:none;
+}
+.cup-wrapper.lifted .cup-svg { transform:translateY(-108px); }
+.dice-under {
+  position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+  display:flex; gap:6px; flex-wrap:wrap; justify-content:center;
+  width:158px; opacity:0; transition:opacity 0.25s 0.2s; pointer-events:none;
+}
+.cup-wrapper.lifted .dice-under { opacity:1; }
+
+.die-3d {
+  width:38px; height:38px; flex-shrink:0;
+  animation:dieAppear 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,0.7));
+}
+@keyframes dieAppear {
+  from { transform:scale(0) rotate(-20deg); opacity:0; }
+  to   { transform:scale(1) rotate(0deg);   opacity:1; }
+}
+
+/* =================== ACTIONS =================== */
+.actions-panel {
+  width:100%; padding:0 18px; display:flex; flex-direction:column; gap:11px;
+}
+.sep {
+  width:100%; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(200,165,90,0.12),transparent);
+  margin:2px 0;
+}
+.btn-reveal {
+  background: rgba(110,20,20,0.75);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border:1px solid rgba(176,42,42,0.5); border-radius:10px;
+  color:var(--cream); font-family:'Cinzel',serif;
+  font-size:0.78rem; font-weight:700; letter-spacing:0.12em;
+  padding:14px 20px; cursor:pointer; text-transform:uppercase;
+  transition:all 0.2s; box-shadow:0 4px 20px rgba(0,0,0,0.35); width:100%;
+}
+.btn-reveal:active { transform:scale(0.97); }
+.btn-reveal.confirmed {
+  background: rgba(22,50,22,0.8);
+  border-color:rgba(60,160,60,0.45);
+  color:rgba(110,210,110,0.9);
+}
+.reveal-status {
+  font-size:0.78rem; color:rgba(242,228,196,0.55); font-style:italic;
+  text-align:center; text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+}
+
+/* STATS */
+.info-row { display:flex; align-items:center; justify-content:flex-end; gap:10px; }
+.btn-info {
+  background: rgba(200,165,90,0.1); backdrop-filter: blur(6px);
+  border:1px solid rgba(200,165,90,0.3); border-radius:50%;
+  color:var(--gold); font-family:'Cinzel',serif;
+  font-size:1rem; font-weight:700; width:38px; height:38px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s; flex-shrink:0;
+}
+.btn-info:active { background:rgba(200,165,90,0.3); }
+#stats-panel {
+  display:none;
+  background: rgba(18,7,1,0.78); backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border:1px solid rgba(200,165,90,0.18); border-radius:12px; padding:14px;
+}
+#stats-panel.visible { display:block; }
+.stats-title { font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.18em; color:var(--gold); margin-bottom:10px; text-align:center; }
+.stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.stat-item { background:rgba(10,4,0,0.65); border-radius:8px; padding:9px 6px; text-align:center; }
+.stat-count { font-family:'Cinzel',serif; font-size:1.1rem; color:var(--gold-light); font-weight:700; display:block; margin:3px 0 1px; }
+.stat-label { font-size:0.56rem; color:rgba(242,228,196,0.35); letter-spacing:0.05em; text-transform:uppercase; }
+
+/* =================== ROUND ADJUST =================== */
+#round-adjust { display:none; flex-direction:column; gap:10px; width:100%; }
+#round-adjust.visible { display:flex; }
+.adjust-title {
+  font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.18em;
+  color:var(--gold); text-align:center; text-shadow:0 1px 5px rgba(0,0,0,0.9);
+}
+.adjust-btn-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.btn-adjust-dice {
+  padding:14px 4px; border-radius:10px;
+  font-family:'Cinzel',serif; font-size:0.75rem; font-weight:700;
+  letter-spacing:0.05em; cursor:pointer; transition:all 0.2s;
+  border:2px solid transparent; text-transform:uppercase;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.btn-adjust-dice.minus {
+  background: rgba(110,20,20,0.75); color:var(--cream);
+  border-color:rgba(176,42,42,0.42); box-shadow:0 4px 16px rgba(0,0,0,0.3);
+}
+.btn-adjust-dice.neutral {
+  background: rgba(28,16,5,0.75); color:rgba(242,228,196,0.78);
+  border-color:rgba(200,165,90,0.25); box-shadow:0 4px 16px rgba(0,0,0,0.25);
+}
+.btn-adjust-dice.plus {
+  background: rgba(18,52,18,0.75); color:#8de08d;
+  border-color:rgba(60,160,60,0.35); box-shadow:0 4px 16px rgba(0,0,0,0.3);
+}
+.btn-adjust-dice:active { transform:scale(0.96); }
+.btn-adjust-dice.voted {
+  opacity:0.38; cursor:not-allowed; transform:none; border-color:var(--gold) !important;
+}
+.btn-adjust-dice:disabled { opacity:0.22; cursor:not-allowed; transform:none; }
+
+/* Compteur de votes */
+.vote-counter {
+  font-family:'Cinzel',serif; font-size:0.75rem; letter-spacing:0.1em;
+  text-align:center; color:var(--gold-light);
+  text-shadow:0 1px 5px rgba(0,0,0,0.9); min-height:20px;
+}
+.vote-counter .big { font-size:1rem; font-weight:700; }
+
+.vote-status { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+.vote-pip {
+  display:inline-flex; align-items:center; gap:4px;
+  font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.05em;
+  padding:3px 7px; border-radius:12px;
+  background: rgba(10,4,0,0.55); backdrop-filter:blur(6px);
+  border:1px solid rgba(200,165,90,0.12);
+  color:rgba(242,228,196,0.35);
+}
+.vote-pip.done { border-color:rgba(200,165,90,0.45); color:var(--gold-light); }
+.vote-pip .pip-dot { width:7px; height:7px; border-radius:50%; background:currentColor; opacity:0.65; flex-shrink:0; }
+.adjust-note {
+  font-size:0.72rem; color:rgba(242,228,196,0.45); font-style:italic;
+  text-align:center; text-shadow:0 1px 4px rgba(0,0,0,0.9);
+}
+
+/* ONLINE */
+.online-badge {
+  background: rgba(10,4,0,0.5); backdrop-filter:blur(6px);
+  border:1px solid rgba(200,165,90,0.1); border-radius:20px;
+  color:rgba(242,228,196,0.38); font-size:0.72rem; font-style:italic;
+  padding:5px 14px; text-align:center;
+}
+
+/* =================== RESULTS =================== */
+#results-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.88); z-index:100;
+  flex-direction:column; align-items:center; justify-content:flex-start;
+  padding:20px 16px 40px; overflow-y:auto; backdrop-filter:blur(6px);
+}
+#results-overlay.active { display:flex; }
+.results-header { text-align:center; margin-bottom:18px; width:100%; }
+.results-header h2 { font-family:'Cinzel',serif; font-size:1.35rem; letter-spacing:0.15em; color:var(--gold); margin-bottom:3px; }
+.all-players-grid { display:flex; flex-direction:column; gap:9px; width:100%; max-width:400px; }
+.player-result-card {
+  background: rgba(18,7,1,0.8); backdrop-filter:blur(8px);
+  border-radius:12px; padding:12px 14px;
+  display:flex; align-items:center; gap:10px;
+  border-left:4px solid var(--card-color, #c8a55a);
+}
+.player-result-card.eliminated { opacity:0.3; }
+.pr-name { font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.08em; color:var(--cream); min-width:65px; }
+.pr-dice { display:flex; gap:4px; flex-wrap:wrap; flex:1; }
+.close-results-btn {
+  margin-top:18px;
+  background: rgba(18,7,1,0.75); backdrop-filter:blur(8px);
+  border:1px solid rgba(200,165,90,0.18); border-radius:10px;
+  color:var(--cream); font-family:'Cinzel',serif; font-size:0.72rem;
+  letter-spacing:0.15em; padding:12px 32px; cursor:pointer; text-transform:uppercase;
+  width:100%; max-width:400px; transition:all 0.2s;
+}
+.close-results-btn:active { opacity:0.7; }
+.eliminated-area { text-align:center; padding:40px 20px; }
+.eliminated-area h2 { font-family:'Cinzel',serif; font-size:1.8rem; color:#c0392b; }
+
+/* Toast */
+#toast {
+  position:fixed; bottom:28px; left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background: rgba(16,6,1,0.88); backdrop-filter:blur(12px);
+  border:1px solid var(--gold); border-radius:8px;
+  color:var(--cream); font-family:'Cinzel',serif; font-size:0.72rem;
+  letter-spacing:0.1em; padding:10px 18px; text-align:center;
+  transition:transform 0.3s; z-index:999; max-width:280px;
+}
+#toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup-screen">
+  <div class="title-block">
+    <h1>PERUDO</h1>
+    <p>Le jeu des menteurs</p>
+  </div>
+  <div class="gold-line"></div>
+  <div class="setup-card">
+    <div class="input-group">
+      <label>Votre prénom</label>
       <input type="text" id="inp-name" placeholder="Ex: Hugo" maxlength="12" autocomplete="off">
     </div>
     <div class="input-group">
