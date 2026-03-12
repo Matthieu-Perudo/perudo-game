@@ -33,6 +33,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background-image:
+    url("https://img.freepik.com/photos-gratuite/paysage-dessin-anime-ile-tropicale_23-2151724061.jpg?semt=ais_hybrid&w=740&q=80"),
     radial-gradient(ellipse at 50% 0%, #2e1205 0%, transparent 65%),
     repeating-linear-gradient(
       -45deg,
@@ -41,7 +42,12 @@ body {
       rgba(107,58,31,0.06) 30px,
       rgba(107,58,31,0.06) 31px
     );
+  background-size: cover, auto, auto;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, repeat;
 }
+
+
 
 /* =================== SETUP =================== */
 #setup-screen {
@@ -583,7 +589,7 @@ input:focus { border-color:var(--gold); }
   <div class="setup-card">
     <div class="input-group">
       <label>Votre prénom</label>
-      <input type="text" id="inp-name" placeholder="Ex: Maqueue t’es trop fort maxlength="12" autocomplete="off">
+      <input type="text" id="inp-name" placeholder="Ex: Maqueue t’es trop fort" maxlength="12" autocomplete="off">
     </div>
     <div class="input-group">
       <label>Couleur de votre gobelet</label>
