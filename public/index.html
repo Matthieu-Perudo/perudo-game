@@ -715,60 +715,211 @@ function renderDiceUnder() {
   c.innerHTML='';
   state.myDice.slice(0,state.myDiceCount).forEach((val,i)=>{
     const el=document.createElementNS('http://www.w3.org/2000/svg','svg');
-    el.setAttribute('viewBox','0 0 38 38'); el.setAttribute('width','38'); el.setAttribute('height','38');
+    el.setAttribute('viewBox','0 0 40 40'); el.setAttribute('width','40'); el.setAttribute('height','40');
     el.className.baseVal='die-3d'; el.style.animationDelay=(i*0.07)+'s';
     el.innerHTML=buildDiceSVG(val,state.color); c.appendChild(el);
   });
 }
 
 function buildCupSVG(c,cDark,cLight){
-  return `<svg class="cup-svg" viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg">
+  const cMid = shadeColor(c, -15);
+  const cDeep = shadeColor(c, -60);
+  const cEngraving = shadeColor(c, -45);
+  const cHighlight = shadeColor(c, 55);
+  return `<svg class="cup-svg" viewBox="0 0 160 210" xmlns="http://www.w3.org/2000/svg">
     <defs>
+      <!-- Gradient principal : effet 3D cylindrique -->
       <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style="stop-color:${cDark}"/><stop offset="28%" style="stop-color:${c}"/>
-        <stop offset="55%" style="stop-color:${cLight}"/><stop offset="80%" style="stop-color:${c}"/>
-        <stop offset="100%" style="stop-color:${cDark}"/>
+        <stop offset="0%"   stop-color="${cDeep}"/>
+        <stop offset="18%"  stop-color="${cDark}"/>
+        <stop offset="42%"  stop-color="${cHighlight}"/>
+        <stop offset="65%"  stop-color="${c}"/>
+        <stop offset="85%"  stop-color="${cMid}"/>
+        <stop offset="100%" stop-color="${cDeep}"/>
       </linearGradient>
-      <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style="stop-color:${cDark}"/><stop offset="50%" style="stop-color:${cLight}"/>
-        <stop offset="100%" style="stop-color:${cDark}"/>
+      <!-- Gradient vertical pour le fond du gobelet -->
+      <linearGradient id="vg" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="${cLight}" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="${cDark}"  stop-opacity="0.4"/>
       </linearGradient>
+      <!-- Masque pour la forme ovoïde -->
+      <clipPath id="cupClip">
+        <path d="M 68 8 Q 30 8 22 45 Q 14 82 14 115 Q 14 155 22 175 Q 30 195 80 198 Q 130 195 138 175 Q 146 155 146 115 Q 146 82 138 45 Q 130 8 92 8 Z"/>
+      </clipPath>
+      <filter id="cupShadow">
+        <feDropShadow dx="3" dy="6" stdDeviation="5" flood-color="rgba(0,0,0,0.6)"/>
+      </filter>
     </defs>
-    <ellipse cx="80" cy="195" rx="52" ry="5" fill="rgba(0,0,0,0.35)"/>
-    <path d="M 30 40 L 20 185 Q 20 192 30 192 L 130 192 Q 140 192 140 185 L 130 40 Z" fill="url(#cg)"/>
-    <path d="M 35 80 L 125 80" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
-    <path d="M 33 120 L 127 120" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
-    <path d="M 31 160 L 129 160" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
-    <path d="M 52 45 L 47 180" stroke="rgba(255,255,255,0.09)" stroke-width="3" stroke-linecap="round" fill="none"/>
-    <ellipse cx="80" cy="40" rx="52" ry="12" fill="url(#rg)"/>
-    <ellipse cx="80" cy="40" rx="50" ry="10" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
-    <ellipse cx="80" cy="42" rx="43" ry="8" fill="#1a0c05" opacity="0.92"/>
+
+    <!-- Ombre portée -->
+    <ellipse cx="82" cy="205" rx="54" ry="6" fill="rgba(0,0,0,0.45)"/>
+
+    <!-- Corps principal ovoïde (forme Perudo) -->
+    <path d="M 68 8 Q 30 8 22 45 Q 14 82 14 115 Q 14 155 22 175 Q 30 195 80 198 Q 130 195 138 175 Q 146 155 146 115 Q 146 82 138 45 Q 130 8 92 8 Z"
+          fill="url(#cg)" filter="url(#cupShadow)"/>
+
+    <!-- Reflet vertical gauche -->
+    <path d="M 68 8 Q 30 8 22 45 Q 14 82 14 115 Q 14 155 22 175 Q 30 195 80 198 Q 130 195 138 175 Q 146 155 146 115 Q 146 82 138 45 Q 130 8 92 8 Z"
+          fill="url(#vg)"/>
+
+    <!-- ===== GRAVURES AZTÈQUES ===== -->
+    <g clip-path="url(#cupClip)" opacity="0.55">
+
+      <!-- Bande supérieure : motif géométrique -->
+      <rect x="14" y="38" width="132" height="3" fill="${cEngraving}" opacity="0.7"/>
+      <rect x="14" y="44" width="132" height="1.5" fill="${cEngraving}" opacity="0.4"/>
+
+      <!-- Rangée de carrés haut -->
+      <g fill="${cEngraving}" opacity="0.6">
+        ${Array.from({length:9},(_,i)=>`<rect x="${22+i*13}" y="49" width="7" height="7" rx="1"/>`).join('')}
+      </g>
+      <rect x="14" y="59" width="132" height="2" fill="${cEngraving}" opacity="0.5"/>
+
+      <!-- Motif dents de scie milieu-haut -->
+      <polyline points="14,75 24,65 34,75 44,65 54,75 64,65 74,75 84,65 94,75 104,65 114,75 124,65 134,75 144,65 146,72"
+        stroke="${cEngraving}" stroke-width="2" fill="none" opacity="0.5"/>
+
+      <!-- Bande centrale -->
+      <rect x="14" y="95"  width="132" height="2.5" fill="${cEngraving}" opacity="0.6"/>
+      <rect x="14" y="100" width="132" height="1"   fill="${cEngraving}" opacity="0.3"/>
+
+      <!-- Motif losanges / spirales -->
+      <g stroke="${cEngraving}" stroke-width="1.8" fill="none" opacity="0.5">
+        <path d="M 30 108 L 38 116 L 30 124 L 22 116 Z"/>
+        <path d="M 56 108 L 64 116 L 56 124 L 48 116 Z"/>
+        <path d="M 82 108 L 90 116 L 82 124 L 74 116 Z"/>
+        <path d="M 108 108 L 116 116 L 108 124 L 100 116 Z"/>
+        <path d="M 134 108 L 142 116 L 134 124 L 126 116 Z"/>
+      </g>
+
+      <!-- Bande milieu-bas -->
+      <rect x="14" y="130" width="132" height="2.5" fill="${cEngraving}" opacity="0.6"/>
+
+      <!-- Motif dents de scie bas -->
+      <polyline points="14,142 24,132 34,142 44,132 54,142 64,132 74,142 84,132 94,142 104,132 114,142 124,132 134,142 144,132 146,140"
+        stroke="${cEngraving}" stroke-width="2" fill="none" opacity="0.45"/>
+
+      <!-- Rangée de carrés bas -->
+      <g fill="${cEngraving}" opacity="0.55">
+        ${Array.from({length:9},(_,i)=>`<rect x="${22+i*13}" y="148" width="7" height="7" rx="1"/>`).join('')}
+      </g>
+      <rect x="14" y="158" width="132" height="2"   fill="${cEngraving}" opacity="0.5"/>
+      <rect x="14" y="162" width="132" height="3.5" fill="${cEngraving}" opacity="0.65"/>
+
+      <!-- Bande fond -->
+      <rect x="14" y="177" width="132" height="2" fill="${cEngraving}" opacity="0.4"/>
+    </g>
+
+    <!-- ===== SYMBOLE SERPENT / CONDOR (Perudo) ===== -->
+    <g transform="translate(80,75)" opacity="0.82">
+      <!-- Corps serpent spirale -->
+      <path d="M 0 -20 C 14 -20 18 -8 10 0 C 2 8 -10 6 -10 0 C -10 -8 -2 -14 6 -10 C 14 -6 10 6 0 8"
+            stroke="${cHighlight}" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      <!-- Tête serpent -->
+      <ellipse cx="0" cy="10" rx="4" ry="3" fill="${cHighlight}" opacity="0.9"/>
+      <!-- Langue -->
+      <path d="M -2 13 L -5 17 M 2 13 L 5 17" stroke="${cHighlight}" stroke-width="1.2" stroke-linecap="round"/>
+      <!-- Œil -->
+      <circle cx="-1.5" cy="9" r="1" fill="${cDeep}" opacity="0.8"/>
+    </g>
+
+    <!-- Reflet brillant gauche (spéculaire) -->
+    <path d="M 34 20 Q 28 60 26 115 Q 26 150 30 172"
+          stroke="rgba(255,255,255,0.18)" stroke-width="8" fill="none"
+          stroke-linecap="round"/>
+    <path d="M 40 18 Q 34 55 33 100"
+          stroke="rgba(255,255,255,0.08)" stroke-width="4" fill="none"
+          stroke-linecap="round"/>
+
+    <!-- Bord supérieur du gobelet (ouverture) -->
+    <ellipse cx="80" cy="10" rx="24" ry="7" fill="${cDark}" opacity="0.9"/>
+    <ellipse cx="80" cy="10" rx="22" ry="5.5" fill="${cDeep}" opacity="0.95"/>
+    <ellipse cx="80" cy="10" rx="20" ry="4"   fill="rgba(0,0,0,0.85)"/>
+    <!-- Liseré doré du bord -->
+    <ellipse cx="80" cy="10" rx="24" ry="7" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
   </svg>`;
 }
 
 function buildDiceSVG(value,baseColor){
-  const c=baseColor, cDark=shadeColor(c,-50), cLit=shadeColor(c,40);
-  const dots={1:[[19,19]],2:[[10,10],[28,28]],3:[[10,10],[19,19],[28,28]],4:[[10,10],[28,10],[10,28],[28,28]],5:[[10,10],[28,10],[19,19],[10,28],[28,28]],6:[[10,9],[28,9],[10,19],[28,19],[10,29],[28,29]]};
-  let content='';
-  if(value===PACO_FACE){
-    content=`<ellipse cx="19" cy="19" rx="8" ry="9" fill="white" opacity="0.88"/>
-      <ellipse cx="17" cy="14" rx="3.5" ry="4" fill="white" opacity="0.95"/>
-      <circle cx="16" cy="13" r="1" fill="${cDark}" opacity="0.8"/>
-      <path d="M14 16 Q11 15 10 17" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M19 24 Q19 28 17 30" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M19 24 Q21 28 23 29" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
-  } else { (dots[value]||[]).forEach(([x,y])=>{ content+=`<circle cx="${x}" cy="${y}" r="2.8" fill="white" opacity="0.9"/>`; }); }
-  const uid=value+c.replace('#','');
-  return `<defs><linearGradient id="dg${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%" style="stop-color:${cLit}"/><stop offset="60%" style="stop-color:${c}"/>
-    <stop offset="100%" style="stop-color:${cDark}"/>
-  </linearGradient></defs>
-  <ellipse cx="19" cy="35" rx="14" ry="3" fill="rgba(0,0,0,0.4)"/>
-  <path d="M 32 6 L 36 10 L 36 31 L 32 32 Z" fill="${cDark}" opacity="0.85"/>
-  <path d="M 6 30 L 32 30 L 36 31 L 10 34 Z" fill="${shadeColor(c,-30)}" opacity="0.9"/>
-  <rect x="4" y="4" width="28" height="28" rx="5" fill="url(#dg${uid})"/>
-  <ellipse cx="11" cy="9" rx="5" ry="3" fill="white" opacity="0.16" transform="rotate(-20 11 9)"/>
-  ${content}`;
+  const c=baseColor, cDark=shadeColor(c,-55), cLit=shadeColor(c,50), cMid=shadeColor(c,-20);
+  // Positions des points — coordonnées sur face 32x32 centrée en (19,19)
+  const dots={
+    1:[[19,19]],
+    2:[[12,12],[26,26]],
+    3:[[12,12],[19,19],[26,26]],
+    4:[[12,12],[26,12],[12,26],[26,26]],
+    5:[[12,12],[26,12],[19,19],[12,26],[26,26]],
+    6:[[12,10],[26,10],[12,19],[26,19],[12,28],[26,28]],
+  };
+  const uid = 'd'+value+c.replace('#','');
+  let face = '';
+
+  if (value === PACO_FACE) {
+    // Condor / aigle Inca stylisé (Paco)
+    face = `
+      <!-- Condor Paco -->
+      <g transform="translate(19,19)">
+        <!-- Corps -->
+        <ellipse cx="0" cy="2" rx="5" ry="6" fill="white" opacity="0.92"/>
+        <!-- Tête -->
+        <circle cx="0" cy="-6" r="4" fill="white" opacity="0.92"/>
+        <!-- Bec -->
+        <path d="M 1 -5 L 5 -3 L 1 -2 Z" fill="${cDark}" opacity="0.85"/>
+        <!-- Œil -->
+        <circle cx="-1" cy="-7" r="1.2" fill="${cDark}" opacity="0.9"/>
+        <!-- Ailes ouvertes -->
+        <path d="M -5 0 Q -12 -4 -13 2 Q -9 4 -5 2 Z" fill="white" opacity="0.88"/>
+        <path d="M  5 0 Q  12 -4  13 2 Q  9 4  5 2 Z" fill="white" opacity="0.88"/>
+        <!-- Queue -->
+        <path d="M -3 7 L 0 12 L 3 7" fill="white" opacity="0.75"/>
+        <!-- Crête tête -->
+        <path d="M -1 -10 Q 0 -14 1 -10" stroke="white" stroke-width="1.2" fill="none" opacity="0.7"/>
+      </g>`;
+  } else {
+    face = (dots[value]||[]).map(([x,y])=>
+      `<circle cx="${x}" cy="${y}" r="3.2" fill="white" opacity="0.95"/>`
+    ).join('');
+  }
+
+  return `
+    <defs>
+      <linearGradient id="${uid}t" x1="20%" y1="0%" x2="80%" y2="100%">
+        <stop offset="0%"   stop-color="${cLit}"/>
+        <stop offset="45%"  stop-color="${c}"/>
+        <stop offset="100%" stop-color="${cDark}"/>
+      </linearGradient>
+      <linearGradient id="${uid}r" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="${cMid}"/>
+        <stop offset="100%" stop-color="${cDark}"/>
+      </linearGradient>
+      <linearGradient id="${uid}b" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="${cDark}"/>
+        <stop offset="100%" stop-color="${shadeColor(c,-40)}"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Ombre -->
+    <ellipse cx="20" cy="36" rx="13" ry="3" fill="rgba(0,0,0,0.45)"/>
+
+    <!-- Face droite (côté) -->
+    <path d="M 32 7 L 37 12 L 37 33 L 32 33 Z" fill="url(#${uid}r)"/>
+    <!-- Face basse -->
+    <path d="M 5 33 L 32 33 L 37 33 L 37 33 L 12 37 Z" fill="url(#${uid}b)"/>
+
+    <!-- Face principale avec coins très arrondis (style Perudo) -->
+    <rect x="4" y="5" width="28" height="28" rx="7" ry="7" fill="url(#${uid}t)"/>
+
+    <!-- Reflet spéculaire -->
+    <ellipse cx="11" cy="10" rx="6" ry="3.5"
+             fill="white" opacity="0.2" transform="rotate(-25 11 10)"/>
+
+    <!-- Contour léger -->
+    <rect x="4" y="5" width="28" height="28" rx="7" ry="7"
+          fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+
+    <!-- Points / Paco -->
+    ${face}
+  `;
 }
 
 // REVEAL
@@ -807,7 +958,7 @@ function toggleStats() {
     panel.classList.add('visible');
     const counts=buildStatCounts(serverPlayers), total=counts.reduce((a,b)=>a+b,0);
     panel.innerHTML=`<div class="stats-title">TOTAL — ${total} dé${total>1?'s':''} en jeu</div><div class="stats-grid">
-      ${counts.map((c,i)=>`<div class="stat-item"><div style="height:28px;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 38 38" width="24" height="24">${buildDiceSVG(i+1,i===0?'#c8a55a':'#888')}</svg></div><span class="stat-count">${c}</span><span class="stat-label">${['Paco','2','3','4','5','6'][i]}</span></div>`).join('')}
+      ${counts.map((c,i)=>`<div class="stat-item"><div style="height:28px;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 40 40" width="26" height="26">${buildDiceSVG(i+1,i===0?'#c8a55a':'#888')}</svg></div><span class="stat-count">${c}</span><span class="stat-label">${['Paco','2','3','4','5','6'][i]}</span></div>`).join('')}
     </div>`;
   } else { panel.classList.remove('visible'); panel.innerHTML=''; }
 }
