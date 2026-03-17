@@ -1103,6 +1103,99 @@ function closeVictory() {
 
 function closeResults(){ document.getElementById('results-overlay').classList.remove('active'); }
 
+// ===== SHAKE TO REROLL (secret feature) =====
+(function initShake() {
+  const SHAKE_THRESHOLD = 22;   // accélération minimale en m/s² — assez fort
+  const SHAKE_COOLDOWN  = 3000; // 3s entre deux secousses
+  let lastShake = 0;
+  let lastAcc   = { x: null, y: null, z: null };
+
+  function handleMotion(e) {
+    const acc = e.accelerationIncludingGravity;
+    if (!acc) return;
+    const { x, y, z } = acc;
+
+    if (lastAcc.x === null) { lastAcc = { x, y, z }; return; }
+
+    const dx = Math.abs(x - lastAcc.x);
+    const dy = Math.abs(y - lastAcc.y);
+    const dz = Math.abs(z - lastAcc.z);
+    lastAcc = { x, y, z };
+
+    const delta = dx + dy + dz;
+
+    if (delta > SHAKE_THRESHOLD) {
+      const now = Date.now();
+      if (now - lastShake < SHAKE_COOLDOWN) return;
+
+      // Ne relancer que si la manche est en cours (gobelet pas encore révélé)
+      if (state.revealed || state.myDiceCount <= 0 || !state.name) return;
+
+      lastShake = now;
+      rerollOnShake();
+    }
+  }
+
+  function rerollOnShake() {
+    state.myDice = rollDice(state.myDiceCount);
+
+    // Animation visuelle secrète : le gobelet tremble
+    const cupSvg = document.querySelector('.cup-svg');
+    if (cupSvg) {
+      cupSvg.style.transition = 'transform 0.08s';
+      let shakes = 0;
+      const dirs = [4, -6, 7, -5, 4, -3, 2, 0];
+      const interval = setInterval(() => {
+        if (shakes >= dirs.length) {
+          cupSvg.style.transform = '';
+          clearInterval(interval);
+          return;
+        }
+        cupSvg.style.transform = `translateX(${dirs[shakes]}px)`;
+        shakes++;
+      }, 70);
+    }
+
+    // Toast discret
+    showToast('🎲 Relancé !');
+
+    // Mettre à jour les dés côté serveur (mais sans changer l'état de ready)
+    renderCup();
+    send({
+      type: 'update_player',
+      name: state.name,
+      dice: state.myDice,
+      diceCount: state.myDiceCount,
+      color: state.color,
+      ready: false,
+      hasVoted: false,
+      vote: null
+    });
+  }
+
+  // iOS 13+ nécessite une permission explicite
+  function requestMotionPermission() {
+    if (typeof DeviceMotionEvent !== 'undefined' &&
+        typeof DeviceMotionEvent.requestPermission === 'function') {
+      // On ne demande la permission qu'au premier clic utilisateur
+      document.addEventListener('click', function askOnce() {
+        DeviceMotionEvent.requestPermission()
+          .then(state => {
+            if (state === 'granted') {
+              window.addEventListener('devicemotion', handleMotion);
+            }
+          })
+          .catch(() => {});
+        document.removeEventListener('click', askOnce);
+      }, { once: true });
+    } else if (typeof DeviceMotionEvent !== 'undefined') {
+      window.addEventListener('devicemotion', handleMotion);
+    }
+  }
+
+  requestMotionPermission();
+})();
+
 function updateDiceCountText(){
   const el=document.getElementById('dice-count-text'); if(!el)return;
   const n=state.myDiceCount; el.textContent=n<=0?'Éliminé ☠️':`${n} dé${n>1?'s':''}`;
