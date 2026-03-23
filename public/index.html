@@ -824,23 +824,17 @@ function renderDiceUnder() {
 function buildCupSVG(c, cDark, cLight) {
   const filter = getImageFilter(c);
   return `
-    <div style="position:relative; width:330px; height:420px;">
-      <img src="Gobelet.png" style="
-        position:absolute;
-        width:300px; height:390px;
-        left:15px; top:0;
-        filter:${filter};
-      "/>
-      <div style="
-        position:absolute;
-        top:385px; left:50%;
-        transform:translateX(-50%);
-        width:200px; height:18px;
-        background:rgba(0,0,0,0.5);
-        border-radius:50%;
-        filter:blur(6px);
-      "></div>
-    </div>`;
+    <img src="Gobelet.png" class="cup-svg" style="filter:${filter};"/>
+    <div style="
+      position:absolute;
+      bottom:-10px; left:50%;
+      transform:translateX(-50%);
+      width:180px; height:16px;
+      background:rgba(0,0,0,0.55);
+      border-radius:50%;
+      filter:blur(8px);
+      pointer-events:none;
+    "></div>`;
 }
 
  
