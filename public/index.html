@@ -823,9 +823,20 @@ function renderDiceUnder() {
 
 
 function buildCupSVG(c, cDark, cLight) {
+  const cupFiles = {
+    '#c0392b': 'Gobelet_rouge.png',
+    '#1a6ea8': 'Gobelet_bleu.png',
+    '#1e7a4a': 'Gobelet_vert.png',
+    '#9b5a2f': 'Gobelet_bois.png',
+    '#7c5cbf': 'Gobelet.png',
+    '#d4651a': 'Gobelet.png',
+    '#c0527a': 'Gobelet.png',
+    '#d4c090': 'Gobelet.png',
+  };
+  const src = cupFiles[c] || 'Gobelet.png';
   return `
     <svg class="cup-svg" viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg">
-      <image href="Gobelet.png" x="0" y="0" width="160" height="220"
+      <image href="${src}" x="0" y="0" width="160" height="220"
         preserveAspectRatio="xMidYMid meet"/>
     </svg>
     <div style="
